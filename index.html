@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Escape - Action Arcade Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            color: white;
+        }
+
+        #score-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #combo-display {
+            font-size: 18px;
+            color: #ff6b6b;
+            transition: transform 0.1s;
+        }
+
+        #combo-display.pulse {
+            transform: scale(1.3);
+            color: #ff0000;
+        }
+
+        #lives-display {
+            display: flex;
+            gap: 5px;
+        }
+
+        .life-icon {
+            width: 25px;
+            height: 25px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .life-icon.lost {
+            background: #333;
+            opacity: 0.5;
+        }
+
+        #powerup-display {
+            display: flex;
+            gap: 10px;
+        }
+
+        .powerup-slot {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .powerup-slot.active {
+            border-color: #ffd700;
+            box-shadow: 0 0 10px #ffd700;
+            animation: glow 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px #ffd700; }
+            to { box-shadow: 0 0 20px #ffd700; }
+        }
+
+        #game-canvas {
+            border: 4px solid #4a4a6a;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), inset 0 0 50px rgba(0, 0, 0, 0.3);
+            background: #2a2a4a;
+        }
+
+        #game-footer {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            color: white;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .key-hint {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        /* Menu Screens */
+        .menu-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            color: white;
+        }
+
+        .menu-screen.hidden {
+            display: none;
+        }
+
+        #main-menu h1 {
+            font-size: 48px;
+            color: #ffd700;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+        }
+
+        #main-menu h2 {
+            font-size: 24px;
+            color: #ff6b6b;
+            margin-bottom: 40px;
+        }
+
+        .menu-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        .menu-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .settings-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            min-width: 300px;
+        }
+
+        .setting-row label {
+            font-size: 16px;
+        }
+
+        .setting-row select, .setting-row input {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+        }
+
+        .setting-row input[type="range"] {
+            width: 150px;
+        }
+
+        /* Game Over / Win Screen */
+        #game-over-screen h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #game-over-screen.win h2 {
+            color: #4ade80;
+        }
+
+        #game-over-screen.lose h2 {
+            color: #ff6b6b;
+        }
+
+        #final-score {
+            font-size: 36px;
+            color: #ffd700;
+            margin-bottom: 30px;
+        }
+
+        /* Level indicator */
+        #level-display {
+            font-size: 18px;
+            color: #4ade80;
+        }
+
+        /* Items remaining */
+        #items-display {
+            font-size: 16px;
+            color: #60a5fa;
+        }
+
+        /* Pause Screen */
+        #pause-screen {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        #pause-screen h2 {
+            font-size: 48px;
+            color: #ffd700;
+            margin-bottom: 30px;
+        }
+
+        /* Message popup */
+        #message-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 32px;
+            font-weight: bold;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #message-popup.show {
+            opacity: 1;
+        }
+
+        /* Minimap */
+        #minimap {
+            position: absolute;
+            bottom: 60px;
+            right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-header">
+            <div id="score-display">Score: 0</div>
+            <div id="combo-display">Combo: x1</div>
+            <div id="level-display">Level 1</div>
+            <div id="items-display">Items: 0/0</div>
+            <div id="powerup-display">
+                <div class="powerup-slot" id="powerup-1" title="Hall Pass"></div>
+                <div class="powerup-slot" id="powerup-2" title="Energy Drink"></div>
+                <div class="powerup-slot" id="powerup-3" title="Stink Bomb"></div>
+            </div>
+            <div id="lives-display"></div>
+        </div>
+
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <canvas id="minimap" width="150" height="112"></canvas>
+
+        <div id="game-footer">
+            <div class="key-hint"><span class="key">WASD</span> or <span class="key">Arrows</span> Move</div>
+            <div class="key-hint"><span class="key">SPACE</span> Dash</div>
+            <div class="key-hint"><span class="key">1-3</span> Use Power-up</div>
+            <div class="key-hint"><span class="key">ESC</span> Pause</div>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="menu-screen">
+            <h1>SCHOOL ESCAPE</h1>
+            <h2>Escape the Teachers!</h2>
+            <div class="settings-panel">
+                <div class="setting-row">
+                    <label>School Type:</label>
+                    <select id="school-type">
+                        <option value="elementary">Elementary (Easy)</option>
+                        <option value="middle" selected>Middle School (Medium)</option>
+                        <option value="high">High School (Hard)</option>
+                        <option value="university">University (Expert)</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Map Size:</label>
+                    <select id="map-size">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Teachers:</label>
+                    <input type="range" id="teacher-count" min="2" max="8" value="4">
+                    <span id="teacher-count-display">4</span>
+                </div>
+            </div>
+            <button class="menu-button" id="start-button">START GAME</button>
+            <button class="menu-button" id="how-to-play-button">HOW TO PLAY</button>
+        </div>
+
+        <!-- How To Play -->
+        <div id="how-to-play-screen" class="menu-screen hidden">
+            <h2 style="color: #ffd700; margin-bottom: 30px;">HOW TO PLAY</h2>
+            <div class="settings-panel" style="max-width: 500px; text-align: left;">
+                <p style="margin-bottom: 15px;"><strong style="color: #4ade80;">OBJECTIVE:</strong> Collect all homework pages and reach the exit without getting caught by teachers!</p>
+
+                <p style="margin-bottom: 15px;"><strong style="color: #60a5fa;">CONTROLS:</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>WASD or Arrow Keys - Move</li>
+                    <li>SPACE - Dash (quick burst of speed)</li>
+                    <li>1, 2, 3 - Use collected power-ups</li>
+                    <li>ESC - Pause game</li>
+                </ul>
+
+                <p style="margin-bottom: 15px;"><strong style="color: #ffd700;">POWER-UPS:</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>📜 Hall Pass - Temporary invincibility</li>
+                    <li>⚡ Energy Drink - Super speed</li>
+                    <li>💨 Stink Bomb - Stuns nearby teachers</li>
+                    <li>🛹 Skateboard - Fast movement</li>
+                </ul>
+
+                <p style="margin-bottom: 15px;"><strong style="color: #ff6b6b;">TEACHERS:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li>🧑‍🏫 Patrol Teacher - Follows set routes</li>
+                    <li>👨‍🏫 Hunter Teacher - Actively chases you</li>
+                    <li>👩‍🏫 Fast Teacher - Quick but predictable</li>
+                </ul>
+            </div>
+            <button class="menu-button" id="back-to-menu-button">BACK TO MENU</button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div id="pause-screen" class="menu-screen hidden">
+            <h2>PAUSED</h2>
+            <button class="menu-button" id="resume-button">RESUME</button>
+            <button class="menu-button" id="quit-button">QUIT TO MENU</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="menu-screen hidden">
+            <h2>GAME OVER</h2>
+            <div id="final-score">Score: 0</div>
+            <div id="final-stats" style="margin-bottom: 20px; color: #aaa;"></div>
+            <button class="menu-button" id="retry-button">PLAY AGAIN</button>
+            <button class="menu-button" id="menu-button">MAIN MENU</button>
+        </div>
+
+        <!-- Message Popup -->
+        <div id="message-popup"></div>
+    </div>
+
+    <script>
+        // ============================================
+        // SCHOOL ESCAPE - Action Arcade Game
+        // ============================================
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const minimapCanvas = document.getElementById('minimap');
+        const minimapCtx = minimapCanvas.getContext('2d');
+
+        // Game constants
+        const TILE_SIZE = 32;
+        const PLAYER_SIZE = 24;
+        const TEACHER_SIZE = 28;
+
+        // Tile types
+        const TILES = {
+            FLOOR: 0,
+            WALL: 1,
+            DESK: 2,
+            LOCKER: 3,
+            WET_FLOOR: 4,
+            EXIT: 5,
+            DOOR: 6
+        };
+
+        // Game state
+        let gameState = {
+            running: false,
+            paused: false,
+            score: 0,
+            combo: 1,
+            comboTimer: 0,
+            lives: 3,
+            level: 1,
+            map: [],
+            mapWidth: 0,
+            mapHeight: 0,
+            collectibles: [],
+            powerups: [],
+            activePowerups: [],
+            playerPowerups: [null, null, null],
+            particles: [],
+            screenShake: 0,
+            camera: { x: 0, y: 0 }
+        };
+
+        // Player object
+        let player = {
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            speed: 4,
+            dashCooldown: 0,
+            isDashing: false,
+            dashTimer: 0,
+            invincible: false,
+            invincibleTimer: 0,
+            speedBoost: false,
+            speedBoostTimer: 0,
+            direction: 0, // 0: right, 1: down, 2: left, 3: up
+            animFrame: 0
+        };
+
+        // Teachers array
+        let teachers = [];
+
+        // Input state
+        const keys = {};
+
+        // Settings
+        let settings = {
+            schoolType: 'middle',
+            mapSize: 'medium',
+            teacherCount: 4
+        };
+
+        // ============================================
+        // MAP GENERATION
+        // ============================================
+
+        function generateMap() {
+            const sizeConfigs = {
+                small: { width: 25, height: 19 },
+                medium: { width: 35, height: 27 },
+                large: { width: 50, height: 38 }
+            };
+
+            const schoolConfigs = {
+                elementary: { roomChance: 0.3, obstacleChance: 0.1, corridorWidth: 3 },
+                middle: { roomChance: 0.4, obstacleChance: 0.15, corridorWidth: 2 },
+                high: { roomChance: 0.5, obstacleChance: 0.2, corridorWidth: 2 },
+                university: { roomChance: 0.6, obstacleChance: 0.25, corridorWidth: 2 }
+            };
+
+            const size = sizeConfigs[settings.mapSize];
+            const config = schoolConfigs[settings.schoolType];
+
+            gameState.mapWidth = size.width;
+            gameState.mapHeight = size.height;
+
+            // Initialize map with walls
+            gameState.map = Array(size.height).fill(null).map(() =>
+                Array(size.width).fill(TILES.WALL)
+            );
+
+            // Generate main corridors
+            generateCorridors(config.corridorWidth);
+
+            // Generate rooms
+            generateRooms(config.roomChance);
+
+            // Add obstacles
+            addObstacles(config.obstacleChance);
+
+            // Place exit
+            placeExit();
+
+            // Place player start
+            placePlayer();
+
+            // Place collectibles
+            placeCollectibles();
+
+            // Place power-ups
+            placePowerups();
+
+            // Place teachers
+            placeTeachers();
+        }
+
+        function generateCorridors(width) {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            // Main horizontal corridor
+            const mainY = Math.floor(mapH / 2);
+            for (let x = 1; x < mapW - 1; x++) {
+                for (let dy = -Math.floor(width / 2); dy <= Math.floor(width / 2); dy++) {
+                    if (mainY + dy > 0 && mainY + dy < mapH - 1) {
+                        gameState.map[mainY + dy][x] = TILES.FLOOR;
+                    }
+                }
+            }
+
+            // Vertical corridors
+            const numVertical = Math.floor(mapW / 10) + 1;
+            for (let i = 0; i < numVertical; i++) {
+                const x = Math.floor((i + 0.5) * mapW / numVertical);
+                for (let y = 1; y < mapH - 1; y++) {
+                    for (let dx = -Math.floor(width / 2); dx <= Math.floor(width / 2); dx++) {
+                        if (x + dx > 0 && x + dx < mapW - 1) {
+                            gameState.map[y][x + dx] = TILES.FLOOR;
+                        }
+                    }
+                }
+            }
+
+            // Additional horizontal corridors for larger maps
+            if (mapH > 20) {
+                const extraCorridors = [Math.floor(mapH / 4), Math.floor(3 * mapH / 4)];
+                for (const y of extraCorridors) {
+                    for (let x = 1; x < mapW - 1; x++) {
+                        for (let dy = -Math.floor(width / 2); dy <= Math.floor(width / 2); dy++) {
+                            if (y + dy > 0 && y + dy < mapH - 1) {
+                                gameState.map[y + dy][x] = TILES.FLOOR;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function generateRooms(roomChance) {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+            const roomSizes = [
+                { w: 5, h: 4 },
+                { w: 6, h: 5 },
+                { w: 7, h: 5 },
+                { w: 8, h: 6 }
+            ];
+
+            const numRooms = Math.floor(mapW * mapH * roomChance / 30);
+
+            for (let i = 0; i < numRooms; i++) {
+                const roomSize = roomSizes[Math.floor(Math.random() * roomSizes.length)];
+                const roomX = Math.floor(Math.random() * (mapW - roomSize.w - 2)) + 1;
+                const roomY = Math.floor(Math.random() * (mapH - roomSize.h - 2)) + 1;
+
+                // Check if room overlaps corridor
+                let touchesCorridor = false;
+                for (let y = roomY; y < roomY + roomSize.h && !touchesCorridor; y++) {
+                    for (let x = roomX; x < roomX + roomSize.w; x++) {
+                        if (gameState.map[y][x] === TILES.FLOOR) {
+                            touchesCorridor = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (touchesCorridor) {
+                    // Carve out the room
+                    for (let y = roomY; y < roomY + roomSize.h; y++) {
+                        for (let x = roomX; x < roomX + roomSize.w; x++) {
+                            gameState.map[y][x] = TILES.FLOOR;
+                        }
+                    }
+
+                    // Add desks in classroom pattern
+                    if (Math.random() < 0.7) {
+                        for (let y = roomY + 1; y < roomY + roomSize.h - 1; y += 2) {
+                            for (let x = roomX + 1; x < roomX + roomSize.w - 1; x += 2) {
+                                if (Math.random() < 0.6) {
+                                    gameState.map[y][x] = TILES.DESK;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function addObstacles(obstacleChance) {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            for (let y = 1; y < mapH - 1; y++) {
+                for (let x = 1; x < mapW - 1; x++) {
+                    if (gameState.map[y][x] === TILES.FLOOR && Math.random() < obstacleChance * 0.3) {
+                        // Check it's not blocking a corridor completely
+                        const neighbors = [
+                            gameState.map[y - 1][x],
+                            gameState.map[y + 1][x],
+                            gameState.map[y][x - 1],
+                            gameState.map[y][x + 1]
+                        ];
+                        const floorNeighbors = neighbors.filter(t => t === TILES.FLOOR || t === TILES.DESK).length;
+
+                        if (floorNeighbors >= 2) {
+                            const obstacleType = Math.random();
+                            if (obstacleType < 0.4) {
+                                gameState.map[y][x] = TILES.LOCKER;
+                            } else if (obstacleType < 0.6) {
+                                gameState.map[y][x] = TILES.WET_FLOOR;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function placeExit() {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            // Place exit on the opposite side from where player will start
+            for (let x = mapW - 2; x > mapW / 2; x--) {
+                for (let y = 1; y < mapH - 1; y++) {
+                    if (gameState.map[y][x] === TILES.FLOOR) {
+                        gameState.map[y][x] = TILES.EXIT;
+                        return;
+                    }
+                }
+            }
+        }
+
+        function placePlayer() {
+            const mapH = gameState.mapHeight;
+
+            // Find starting position on left side
+            for (let x = 1; x < 5; x++) {
+                for (let y = 1; y < mapH - 1; y++) {
+                    if (gameState.map[y][x] === TILES.FLOOR) {
+                        player.x = x * TILE_SIZE + TILE_SIZE / 2;
+                        player.y = y * TILE_SIZE + TILE_SIZE / 2;
+                        return;
+                    }
+                }
+            }
+        }
+
+        function placeCollectibles() {
+            gameState.collectibles = [];
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            const numCollectibles = Math.floor(mapW * mapH / 30) + 10;
+
+            let placed = 0;
+            let attempts = 0;
+            while (placed < numCollectibles && attempts < 1000) {
+                const x = Math.floor(Math.random() * (mapW - 2)) + 1;
+                const y = Math.floor(Math.random() * (mapH - 2)) + 1;
+
+                if (gameState.map[y][x] === TILES.FLOOR) {
+                    // Check not too close to player
+                    const px = player.x / TILE_SIZE;
+                    const py = player.y / TILE_SIZE;
+                    if (Math.abs(x - px) + Math.abs(y - py) > 3) {
+                        gameState.collectibles.push({
+                            x: x * TILE_SIZE + TILE_SIZE / 2,
+                            y: y * TILE_SIZE + TILE_SIZE / 2,
+                            collected: false,
+                            type: 'homework',
+                            animOffset: Math.random() * Math.PI * 2
+                        });
+                        placed++;
+                    }
+                }
+                attempts++;
+            }
+        }
+
+        function placePowerups() {
+            gameState.powerups = [];
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            const powerupTypes = ['hallpass', 'energydrink', 'stinkbomb', 'skateboard'];
+            const numPowerups = Math.floor(mapW * mapH / 80) + 3;
+
+            let placed = 0;
+            let attempts = 0;
+            while (placed < numPowerups && attempts < 500) {
+                const x = Math.floor(Math.random() * (mapW - 2)) + 1;
+                const y = Math.floor(Math.random() * (mapH - 2)) + 1;
+
+                if (gameState.map[y][x] === TILES.FLOOR) {
+                    gameState.powerups.push({
+                        x: x * TILE_SIZE + TILE_SIZE / 2,
+                        y: y * TILE_SIZE + TILE_SIZE / 2,
+                        collected: false,
+                        type: powerupTypes[Math.floor(Math.random() * powerupTypes.length)],
+                        animOffset: Math.random() * Math.PI * 2
+                    });
+                    placed++;
+                }
+                attempts++;
+            }
+        }
+
+        function placeTeachers() {
+            teachers = [];
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            const teacherTypes = ['patrol', 'hunter', 'fast'];
+            const numTeachers = settings.teacherCount;
+
+            let placed = 0;
+            let attempts = 0;
+            while (placed < numTeachers && attempts < 500) {
+                const x = Math.floor(Math.random() * (mapW - 4)) + 2;
+                const y = Math.floor(Math.random() * (mapH - 4)) + 2;
+
+                if (gameState.map[y][x] === TILES.FLOOR) {
+                    // Not too close to player start
+                    const px = player.x / TILE_SIZE;
+                    const py = player.y / TILE_SIZE;
+                    if (Math.abs(x - px) + Math.abs(y - py) > 8) {
+                        const type = teacherTypes[placed % teacherTypes.length];
+                        teachers.push(createTeacher(x * TILE_SIZE + TILE_SIZE / 2, y * TILE_SIZE + TILE_SIZE / 2, type));
+                        placed++;
+                    }
+                }
+                attempts++;
+            }
+        }
+
+        function createTeacher(x, y, type) {
+            const baseSpeed = {
+                patrol: 2,
+                hunter: 2.5,
+                fast: 3.5
+            };
+
+            const difficultyMultiplier = {
+                elementary: 0.7,
+                middle: 1,
+                high: 1.2,
+                university: 1.4
+            };
+
+            return {
+                x: x,
+                y: y,
+                vx: 0,
+                vy: 0,
+                speed: baseSpeed[type] * difficultyMultiplier[settings.schoolType],
+                type: type,
+                direction: Math.floor(Math.random() * 4),
+                patrolTimer: 0,
+                chaseTimer: 0,
+                stunned: false,
+                stunnedTimer: 0,
+                seesPlayer: false,
+                animFrame: 0,
+                patrolPath: generatePatrolPath(x, y)
+            };
+        }
+
+        function generatePatrolPath(startX, startY) {
+            // Simple patrol: move in a square pattern
+            const size = (Math.random() * 3 + 2) * TILE_SIZE;
+            return [
+                { x: startX, y: startY },
+                { x: startX + size, y: startY },
+                { x: startX + size, y: startY + size },
+                { x: startX, y: startY + size }
+            ];
+        }
+
+        // ============================================
+        // GAME LOGIC
+        // ============================================
+
+        function update(deltaTime) {
+            if (!gameState.running || gameState.paused) return;
+
+            // Update timers
+            updateTimers(deltaTime);
+
+            // Update player
+            updatePlayer(deltaTime);
+
+            // Update teachers
+            updateTeachers(deltaTime);
+
+            // Check collisions
+            checkCollisions();
+
+            // Update particles
+            updateParticles(deltaTime);
+
+            // Update camera
+            updateCamera();
+
+            // Check win condition
+            checkWinCondition();
+        }
+
+        function updateTimers(deltaTime) {
+            // Combo timer
+            if (gameState.comboTimer > 0) {
+                gameState.comboTimer -= deltaTime;
+                if (gameState.comboTimer <= 0) {
+                    gameState.combo = 1;
+                    updateUI();
+                }
+            }
+
+            // Screen shake
+            if (gameState.screenShake > 0) {
+                gameState.screenShake -= deltaTime * 10;
+            }
+
+            // Player dash cooldown
+            if (player.dashCooldown > 0) {
+                player.dashCooldown -= deltaTime;
+            }
+
+            // Dash duration
+            if (player.isDashing) {
+                player.dashTimer -= deltaTime;
+                if (player.dashTimer <= 0) {
+                    player.isDashing = false;
+                }
+            }
+
+            // Invincibility
+            if (player.invincible) {
+                player.invincibleTimer -= deltaTime;
+                if (player.invincibleTimer <= 0) {
+                    player.invincible = false;
+                }
+            }
+
+            // Speed boost
+            if (player.speedBoost) {
+                player.speedBoostTimer -= deltaTime;
+                if (player.speedBoostTimer <= 0) {
+                    player.speedBoost = false;
+                }
+            }
+
+            // Active powerups
+            gameState.activePowerups = gameState.activePowerups.filter(p => {
+                p.timer -= deltaTime;
+                return p.timer > 0;
+            });
+        }
+
+        function updatePlayer(deltaTime) {
+            // Get input
+            let dx = 0, dy = 0;
+            if (keys['ArrowLeft'] || keys['KeyA']) dx -= 1;
+            if (keys['ArrowRight'] || keys['KeyD']) dx += 1;
+            if (keys['ArrowUp'] || keys['KeyW']) dy -= 1;
+            if (keys['ArrowDown'] || keys['KeyS']) dy += 1;
+
+            // Normalize diagonal movement
+            if (dx !== 0 && dy !== 0) {
+                dx *= 0.707;
+                dy *= 0.707;
+            }
+
+            // Calculate speed
+            let currentSpeed = player.speed;
+            if (player.isDashing) currentSpeed *= 2.5;
+            if (player.speedBoost) currentSpeed *= 1.5;
+
+            // Check for wet floor
+            const tileX = Math.floor(player.x / TILE_SIZE);
+            const tileY = Math.floor(player.y / TILE_SIZE);
+            if (gameState.map[tileY] && gameState.map[tileY][tileX] === TILES.WET_FLOOR) {
+                currentSpeed *= 1.3; // Slide faster but less control
+                player.vx += dx * currentSpeed * 0.3;
+                player.vy += dy * currentSpeed * 0.3;
+                player.vx *= 0.95;
+                player.vy *= 0.95;
+            } else {
+                player.vx = dx * currentSpeed;
+                player.vy = dy * currentSpeed;
+            }
+
+            // Update position with collision
+            const newX = player.x + player.vx;
+            const newY = player.y + player.vy;
+
+            if (!checkWallCollision(newX, player.y, PLAYER_SIZE)) {
+                player.x = newX;
+            }
+            if (!checkWallCollision(player.x, newY, PLAYER_SIZE)) {
+                player.y = newY;
+            }
+
+            // Update direction
+            if (dx > 0) player.direction = 0;
+            else if (dx < 0) player.direction = 2;
+            else if (dy > 0) player.direction = 1;
+            else if (dy < 0) player.direction = 3;
+
+            // Animation
+            if (dx !== 0 || dy !== 0) {
+                player.animFrame += 0.2;
+            }
+
+            // Dash particles
+            if (player.isDashing) {
+                spawnParticle(player.x, player.y, 'dash');
+            }
+        }
+
+        function updateTeachers(deltaTime) {
+            for (const teacher of teachers) {
+                if (teacher.stunned) {
+                    teacher.stunnedTimer -= deltaTime;
+                    if (teacher.stunnedTimer <= 0) {
+                        teacher.stunned = false;
+                    }
+                    continue;
+                }
+
+                // Check if teacher sees player
+                const dx = player.x - teacher.x;
+                const dy = player.y - teacher.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const sightRange = teacher.type === 'hunter' ? 200 : 150;
+
+                teacher.seesPlayer = dist < sightRange && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
+
+                // Different AI behaviors
+                if (teacher.seesPlayer && teacher.type !== 'patrol') {
+                    // Chase player
+                    teacher.chaseTimer = 3;
+                    const angle = Math.atan2(dy, dx);
+                    teacher.vx = Math.cos(angle) * teacher.speed * 1.3;
+                    teacher.vy = Math.sin(angle) * teacher.speed * 1.3;
+                } else if (teacher.chaseTimer > 0) {
+                    teacher.chaseTimer -= deltaTime;
+                    // Continue moving toward last known position
+                } else {
+                    // Patrol behavior
+                    updatePatrol(teacher, deltaTime);
+                }
+
+                // Apply movement with collision
+                const newX = teacher.x + teacher.vx;
+                const newY = teacher.y + teacher.vy;
+
+                if (!checkWallCollision(newX, teacher.y, TEACHER_SIZE)) {
+                    teacher.x = newX;
+                } else {
+                    teacher.vx = -teacher.vx;
+                }
+                if (!checkWallCollision(teacher.x, newY, TEACHER_SIZE)) {
+                    teacher.y = newY;
+                } else {
+                    teacher.vy = -teacher.vy;
+                }
+
+                // Animation
+                teacher.animFrame += 0.15;
+            }
+        }
+
+        function updatePatrol(teacher, deltaTime) {
+            teacher.patrolTimer += deltaTime;
+
+            if (teacher.patrolTimer > 2) {
+                teacher.patrolTimer = 0;
+                teacher.direction = (teacher.direction + 1) % 4;
+            }
+
+            const speed = teacher.speed;
+            switch (teacher.direction) {
+                case 0: teacher.vx = speed; teacher.vy = 0; break;
+                case 1: teacher.vx = 0; teacher.vy = speed; break;
+                case 2: teacher.vx = -speed; teacher.vy = 0; break;
+                case 3: teacher.vx = 0; teacher.vy = -speed; break;
+            }
+        }
+
+        function hasLineOfSight(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const steps = Math.ceil(dist / TILE_SIZE);
+
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const x = x1 + dx * t;
+                const y = y1 + dy * t;
+                const tileX = Math.floor(x / TILE_SIZE);
+                const tileY = Math.floor(y / TILE_SIZE);
+
+                if (gameState.map[tileY] && gameState.map[tileY][tileX] === TILES.WALL) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function checkWallCollision(x, y, size) {
+            const halfSize = size / 2;
+            const corners = [
+                { x: x - halfSize, y: y - halfSize },
+                { x: x + halfSize, y: y - halfSize },
+                { x: x - halfSize, y: y + halfSize },
+                { x: x + halfSize, y: y + halfSize }
+            ];
+
+            for (const corner of corners) {
+                const tileX = Math.floor(corner.x / TILE_SIZE);
+                const tileY = Math.floor(corner.y / TILE_SIZE);
+
+                if (tileX < 0 || tileX >= gameState.mapWidth ||
+                    tileY < 0 || tileY >= gameState.mapHeight) {
+                    return true;
+                }
+
+                const tile = gameState.map[tileY][tileX];
+                if (tile === TILES.WALL || tile === TILES.LOCKER) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkCollisions() {
+            // Collectibles
+            for (const item of gameState.collectibles) {
+                if (item.collected) continue;
+
+                const dx = player.x - item.x;
+                const dy = player.y - item.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < PLAYER_SIZE) {
+                    item.collected = true;
+                    collectItem(item);
+                }
+            }
+
+            // Power-ups
+            for (const powerup of gameState.powerups) {
+                if (powerup.collected) continue;
+
+                const dx = player.x - powerup.x;
+                const dy = player.y - powerup.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < PLAYER_SIZE) {
+                    powerup.collected = true;
+                    collectPowerup(powerup);
+                }
+            }
+
+            // Teachers (if not invincible)
+            if (!player.invincible) {
+                for (const teacher of teachers) {
+                    if (teacher.stunned) continue;
+
+                    const dx = player.x - teacher.x;
+                    const dy = player.y - teacher.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < (PLAYER_SIZE + TEACHER_SIZE) / 2) {
+                        playerCaught();
+                        break;
+                    }
+                }
+            }
+        }
+
+        function collectItem(item) {
+            // Increase combo
+            gameState.combo = Math.min(gameState.combo + 1, 10);
+            gameState.comboTimer = 2;
+
+            // Add score
+            const points = 100 * gameState.combo;
+            gameState.score += points;
+
+            // Spawn particles
+            for (let i = 0; i < 10; i++) {
+                spawnParticle(item.x, item.y, 'collect');
+            }
+
+            // Show points
+            spawnFloatingText(item.x, item.y, `+${points}`);
+
+            updateUI();
+        }
+
+        function collectPowerup(powerup) {
+            // Find empty slot
+            const emptySlot = gameState.playerPowerups.findIndex(p => p === null);
+            if (emptySlot !== -1) {
+                gameState.playerPowerups[emptySlot] = powerup.type;
+                showMessage(`Got ${powerup.type.toUpperCase()}!`);
+            } else {
+                // Apply immediately if inventory full
+                usePowerup(powerup.type);
+            }
+
+            // Particles
+            for (let i = 0; i < 15; i++) {
+                spawnParticle(powerup.x, powerup.y, 'powerup');
+            }
+
+            updateUI();
+        }
+
+        function usePowerup(type) {
+            switch (type) {
+                case 'hallpass':
+                    player.invincible = true;
+                    player.invincibleTimer = 5;
+                    showMessage('INVINCIBLE!');
+                    break;
+                case 'energydrink':
+                    player.speedBoost = true;
+                    player.speedBoostTimer = 8;
+                    showMessage('SPEED BOOST!');
+                    break;
+                case 'stinkbomb':
+                    // Stun nearby teachers
+                    for (const teacher of teachers) {
+                        const dx = player.x - teacher.x;
+                        const dy = player.y - teacher.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 150) {
+                            teacher.stunned = true;
+                            teacher.stunnedTimer = 4;
+                        }
+                    }
+                    showMessage('STINK BOMB!');
+                    gameState.screenShake = 5;
+                    break;
+                case 'skateboard':
+                    player.speedBoost = true;
+                    player.speedBoostTimer = 10;
+                    showMessage('SKATEBOARD!');
+                    break;
+            }
+        }
+
+        function playerCaught() {
+            gameState.lives--;
+            gameState.combo = 1;
+            gameState.screenShake = 10;
+
+            // Spawn particles
+            for (let i = 0; i < 20; i++) {
+                spawnParticle(player.x, player.y, 'hit');
+            }
+
+            if (gameState.lives <= 0) {
+                gameOver(false);
+            } else {
+                // Brief invincibility and reset position
+                player.invincible = true;
+                player.invincibleTimer = 2;
+                showMessage('CAUGHT! ' + gameState.lives + ' lives left');
+            }
+
+            updateUI();
+        }
+
+        function checkWinCondition() {
+            // Check if all collectibles collected
+            const collected = gameState.collectibles.filter(c => c.collected).length;
+            const total = gameState.collectibles.length;
+
+            if (collected === total) {
+                // Check if player is at exit
+                const tileX = Math.floor(player.x / TILE_SIZE);
+                const tileY = Math.floor(player.y / TILE_SIZE);
+
+                if (gameState.map[tileY] && gameState.map[tileY][tileX] === TILES.EXIT) {
+                    gameOver(true);
+                }
+            }
+        }
+
+        function gameOver(won) {
+            gameState.running = false;
+
+            const screen = document.getElementById('game-over-screen');
+            const title = screen.querySelector('h2');
+            const scoreDisplay = document.getElementById('final-score');
+            const statsDisplay = document.getElementById('final-stats');
+
+            if (won) {
+                title.textContent = 'ESCAPED!';
+                screen.className = 'menu-screen win';
+                gameState.score += gameState.lives * 500; // Bonus for remaining lives
+            } else {
+                title.textContent = 'CAUGHT!';
+                screen.className = 'menu-screen lose';
+            }
+
+            scoreDisplay.textContent = `Score: ${gameState.score}`;
+            statsDisplay.innerHTML = `
+                Items: ${gameState.collectibles.filter(c => c.collected).length}/${gameState.collectibles.length}<br>
+                Lives remaining: ${gameState.lives}
+            `;
+
+            screen.classList.remove('hidden');
+        }
+
+        // ============================================
+        // PARTICLES & EFFECTS
+        // ============================================
+
+        function spawnParticle(x, y, type) {
+            const colors = {
+                collect: ['#ffd700', '#ffec8b', '#fff'],
+                powerup: ['#4ade80', '#22d3ee', '#a78bfa'],
+                hit: ['#ff6b6b', '#ff0000', '#ff8888'],
+                dash: ['#60a5fa', '#3b82f6', '#93c5fd']
+            };
+
+            const color = colors[type][Math.floor(Math.random() * colors[type].length)];
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 3 + 1;
+
+            gameState.particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1,
+                color: color,
+                size: Math.random() * 6 + 2
+            });
+        }
+
+        function spawnFloatingText(x, y, text) {
+            gameState.particles.push({
+                x: x,
+                y: y,
+                vx: 0,
+                vy: -2,
+                life: 1,
+                text: text,
+                isText: true
+            });
+        }
+
+        function updateParticles(deltaTime) {
+            gameState.particles = gameState.particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= deltaTime * 2;
+                if (!p.isText) {
+                    p.size *= 0.95;
+                }
+                return p.life > 0;
+            });
+        }
+
+        function updateCamera() {
+            // Smooth camera follow
+            const targetX = player.x - canvas.width / 2;
+            const targetY = player.y - canvas.height / 2;
+
+            gameState.camera.x += (targetX - gameState.camera.x) * 0.1;
+            gameState.camera.y += (targetY - gameState.camera.y) * 0.1;
+
+            // Clamp to map bounds
+            const maxX = gameState.mapWidth * TILE_SIZE - canvas.width;
+            const maxY = gameState.mapHeight * TILE_SIZE - canvas.height;
+
+            gameState.camera.x = Math.max(0, Math.min(maxX, gameState.camera.x));
+            gameState.camera.y = Math.max(0, Math.min(maxY, gameState.camera.y));
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+
+        function render() {
+            // Clear canvas
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Apply screen shake
+            let shakeX = 0, shakeY = 0;
+            if (gameState.screenShake > 0) {
+                shakeX = (Math.random() - 0.5) * gameState.screenShake;
+                shakeY = (Math.random() - 0.5) * gameState.screenShake;
+            }
+
+            ctx.save();
+            ctx.translate(-gameState.camera.x + shakeX, -gameState.camera.y + shakeY);
+
+            // Draw map
+            drawMap();
+
+            // Draw collectibles
+            drawCollectibles();
+
+            // Draw power-ups
+            drawPowerups();
+
+            // Draw teachers
+            drawTeachers();
+
+            // Draw player
+            drawPlayer();
+
+            // Draw particles
+            drawParticles();
+
+            ctx.restore();
+
+            // Draw minimap
+            drawMinimap();
+
+            requestAnimationFrame(render);
+        }
+
+        function drawMap() {
+            const startX = Math.floor(gameState.camera.x / TILE_SIZE);
+            const startY = Math.floor(gameState.camera.y / TILE_SIZE);
+            const endX = Math.min(startX + Math.ceil(canvas.width / TILE_SIZE) + 2, gameState.mapWidth);
+            const endY = Math.min(startY + Math.ceil(canvas.height / TILE_SIZE) + 2, gameState.mapHeight);
+
+            for (let y = Math.max(0, startY); y < endY; y++) {
+                for (let x = Math.max(0, startX); x < endX; x++) {
+                    const tile = gameState.map[y][x];
+                    const px = x * TILE_SIZE;
+                    const py = y * TILE_SIZE;
+
+                    switch (tile) {
+                        case TILES.FLOOR:
+                            ctx.fillStyle = '#3d3d5c';
+                            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                            // Floor pattern
+                            ctx.fillStyle = '#4a4a6a';
+                            if ((x + y) % 2 === 0) {
+                                ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                            }
+                            break;
+
+                        case TILES.WALL:
+                            // Wall with gradient
+                            const gradient = ctx.createLinearGradient(px, py, px, py + TILE_SIZE);
+                            gradient.addColorStop(0, '#5c4033');
+                            gradient.addColorStop(1, '#3d2817');
+                            ctx.fillStyle = gradient;
+                            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                            // Brick pattern
+                            ctx.strokeStyle = '#2a1a0a';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                            if (y % 2 === 0) {
+                                ctx.beginPath();
+                                ctx.moveTo(px + TILE_SIZE / 2, py);
+                                ctx.lineTo(px + TILE_SIZE / 2, py + TILE_SIZE);
+                                ctx.stroke();
+                            }
+                            break;
+
+                        case TILES.DESK:
+                            // Floor underneath
+                            ctx.fillStyle = '#3d3d5c';
+                            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                            // Desk
+                            ctx.fillStyle = '#8b4513';
+                            ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                            ctx.fillStyle = '#a0522d';
+                            ctx.fillRect(px + 6, py + 6, TILE_SIZE - 12, TILE_SIZE - 12);
+                            break;
+
+                        case TILES.LOCKER:
+                            ctx.fillStyle = '#3d3d5c';
+                            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                            // Locker
+                            ctx.fillStyle = '#4a90a4';
+                            ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                            ctx.fillStyle = '#5ba3b8';
+                            ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, 12);
+                            ctx.fillRect(px + 4, py + 18, TILE_SIZE - 8, 12);
+                            // Handle
+                            ctx.fillStyle = '#333';
+                            ctx.fillRect(px + TILE_SIZE - 10, py + 12, 4, 8);
+                            break;
+
+                        case TILES.WET_FLOOR:
+                            ctx.fillStyle = '#3d3d5c';
+                            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                            // Water effect
+                            ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+                            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                            // Caution pattern
+                            ctx.fillStyle = '#ffd700';
+                            ctx.beginPath();
+                            ctx.moveTo(px + TILE_SIZE / 2, py + 4);
+                            ctx.lineTo(px + TILE_SIZE - 4, py + TILE_SIZE - 4);
+                            ctx.lineTo(px + 4, py + TILE_SIZE - 4);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.fillStyle = '#333';
+                            ctx.font = '16px Arial';
+                            ctx.fillText('!', px + TILE_SIZE / 2 - 3, py + TILE_SIZE - 8);
+                            break;
+
+                        case TILES.EXIT:
+                            ctx.fillStyle = '#3d3d5c';
+                            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                            // Exit door
+                            const allCollected = gameState.collectibles.every(c => c.collected);
+                            ctx.fillStyle = allCollected ? '#4ade80' : '#666';
+                            ctx.fillRect(px + 4, py + 2, TILE_SIZE - 8, TILE_SIZE - 4);
+                            // EXIT sign
+                            ctx.fillStyle = allCollected ? '#fff' : '#999';
+                            ctx.font = 'bold 10px Arial';
+                            ctx.fillText('EXIT', px + 6, py + TILE_SIZE / 2 + 3);
+                            // Glow effect if active
+                            if (allCollected) {
+                                ctx.strokeStyle = '#4ade80';
+                                ctx.lineWidth = 2;
+                                ctx.strokeRect(px + 2, py, TILE_SIZE - 4, TILE_SIZE);
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+
+        function drawCollectibles() {
+            const time = Date.now() / 1000;
+
+            for (const item of gameState.collectibles) {
+                if (item.collected) continue;
+
+                const bobY = Math.sin(time * 3 + item.animOffset) * 3;
+
+                // Glow
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                ctx.beginPath();
+                ctx.arc(item.x, item.y + bobY, 15, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Paper/homework icon
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(item.x - 8, item.y - 10 + bobY, 16, 20);
+                ctx.fillStyle = '#333';
+                for (let i = 0; i < 4; i++) {
+                    ctx.fillRect(item.x - 5, item.y - 6 + i * 5 + bobY, 10, 2);
+                }
+            }
+        }
+
+        function drawPowerups() {
+            const time = Date.now() / 1000;
+
+            for (const powerup of gameState.powerups) {
+                if (powerup.collected) continue;
+
+                const bobY = Math.sin(time * 2 + powerup.animOffset) * 4;
+                const scale = 1 + Math.sin(time * 4) * 0.1;
+
+                ctx.save();
+                ctx.translate(powerup.x, powerup.y + bobY);
+                ctx.scale(scale, scale);
+
+                // Draw based on type
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                switch (powerup.type) {
+                    case 'hallpass':
+                        ctx.fillStyle = 'rgba(74, 222, 128, 0.3)';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillText('📜', 0, 0);
+                        break;
+                    case 'energydrink':
+                        ctx.fillStyle = 'rgba(251, 191, 36, 0.3)';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillText('⚡', 0, 0);
+                        break;
+                    case 'stinkbomb':
+                        ctx.fillStyle = 'rgba(167, 139, 250, 0.3)';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillText('💨', 0, 0);
+                        break;
+                    case 'skateboard':
+                        ctx.fillStyle = 'rgba(96, 165, 250, 0.3)';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillText('🛹', 0, 0);
+                        break;
+                }
+
+                ctx.restore();
+            }
+        }
+
+        function drawTeachers() {
+            for (const teacher of teachers) {
+                const bobY = Math.sin(teacher.animFrame) * 2;
+
+                ctx.save();
+                ctx.translate(teacher.x, teacher.y + bobY);
+
+                // Stunned effect
+                if (teacher.stunned) {
+                    ctx.globalAlpha = 0.5;
+                    // Dizzy stars
+                    ctx.font = '12px Arial';
+                    const starAngle = Date.now() / 200;
+                    ctx.fillText('⭐', Math.cos(starAngle) * 15, -20 + Math.sin(starAngle) * 5);
+                    ctx.fillText('⭐', Math.cos(starAngle + Math.PI) * 15, -20 + Math.sin(starAngle + Math.PI) * 5);
+                }
+
+                // Alert indicator
+                if (teacher.seesPlayer && !teacher.stunned) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillText('!', 0, -25);
+                }
+
+                // Teacher body
+                const colors = {
+                    patrol: '#4a90a4',
+                    hunter: '#c0392b',
+                    fast: '#9b59b6'
+                };
+
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(0, TEACHER_SIZE / 2 - 5, TEACHER_SIZE / 2, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Body
+                ctx.fillStyle = colors[teacher.type];
+                ctx.beginPath();
+                ctx.arc(0, 0, TEACHER_SIZE / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Face direction indicator
+                const dirAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+                const faceAngle = dirAngles[teacher.direction];
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(Math.cos(faceAngle) * 5, Math.sin(faceAngle) * 5, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(Math.cos(faceAngle) * 7, Math.sin(faceAngle) * 7, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Teacher type indicator
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                if (teacher.type === 'hunter') ctx.fillText('😠', 0, 3);
+                else if (teacher.type === 'fast') ctx.fillText('😤', 0, 3);
+                else ctx.fillText('🧐', 0, 3);
+
+                ctx.restore();
+            }
+        }
+
+        function drawPlayer() {
+            const time = Date.now() / 1000;
+
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Invincibility effect
+            if (player.invincible) {
+                ctx.globalAlpha = 0.5 + Math.sin(time * 10) * 0.3;
+                // Shield effect
+                ctx.strokeStyle = '#4ade80';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, PLAYER_SIZE / 2 + 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Speed effect
+            if (player.speedBoost) {
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    ctx.globalAlpha = 0.3 - i * 0.1;
+                    ctx.beginPath();
+                    ctx.arc(-player.vx * (i + 1) * 2, -player.vy * (i + 1) * 2, PLAYER_SIZE / 2 - i * 2, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, PLAYER_SIZE / 2 - 3, PLAYER_SIZE / 2, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Player body
+            ctx.fillStyle = '#60a5fa';
+            ctx.beginPath();
+            ctx.arc(0, 0, PLAYER_SIZE / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Backpack
+            ctx.fillStyle = '#f97316';
+            ctx.fillRect(-PLAYER_SIZE / 2 - 3, -5, 6, 14);
+
+            // Face
+            const dirAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+            const faceAngle = dirAngles[player.direction];
+
+            // Eyes
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(Math.cos(faceAngle) * 3 - 4, -2, 4, 0, Math.PI * 2);
+            ctx.arc(Math.cos(faceAngle) * 3 + 4, -2, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(Math.cos(faceAngle) * 5 - 4, -2, 2, 0, Math.PI * 2);
+            ctx.arc(Math.cos(faceAngle) * 5 + 4, -2, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Smile
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 2, 5, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawParticles() {
+            for (const p of gameState.particles) {
+                if (p.isText) {
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = '#ffd700';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.text, p.x, p.y);
+                    ctx.globalAlpha = 1;
+                } else {
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+        }
+
+        function drawMinimap() {
+            minimapCtx.fillStyle = '#1a1a2e';
+            minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+
+            const scaleX = minimapCanvas.width / (gameState.mapWidth * TILE_SIZE);
+            const scaleY = minimapCanvas.height / (gameState.mapHeight * TILE_SIZE);
+
+            // Draw map tiles
+            for (let y = 0; y < gameState.mapHeight; y++) {
+                for (let x = 0; x < gameState.mapWidth; x++) {
+                    const tile = gameState.map[y][x];
+                    const px = x * TILE_SIZE * scaleX;
+                    const py = y * TILE_SIZE * scaleY;
+                    const w = TILE_SIZE * scaleX;
+                    const h = TILE_SIZE * scaleY;
+
+                    if (tile === TILES.WALL) {
+                        minimapCtx.fillStyle = '#5c4033';
+                    } else if (tile === TILES.EXIT) {
+                        minimapCtx.fillStyle = '#4ade80';
+                    } else {
+                        minimapCtx.fillStyle = '#3d3d5c';
+                    }
+                    minimapCtx.fillRect(px, py, w, h);
+                }
+            }
+
+            // Draw collectibles
+            minimapCtx.fillStyle = '#ffd700';
+            for (const item of gameState.collectibles) {
+                if (!item.collected) {
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(item.x * scaleX, item.y * scaleY, 2, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                }
+            }
+
+            // Draw teachers
+            minimapCtx.fillStyle = '#ff6b6b';
+            for (const teacher of teachers) {
+                minimapCtx.beginPath();
+                minimapCtx.arc(teacher.x * scaleX, teacher.y * scaleY, 3, 0, Math.PI * 2);
+                minimapCtx.fill();
+            }
+
+            // Draw player
+            minimapCtx.fillStyle = '#60a5fa';
+            minimapCtx.beginPath();
+            minimapCtx.arc(player.x * scaleX, player.y * scaleY, 4, 0, Math.PI * 2);
+            minimapCtx.fill();
+
+            // Draw viewport
+            minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            minimapCtx.lineWidth = 1;
+            minimapCtx.strokeRect(
+                gameState.camera.x * scaleX,
+                gameState.camera.y * scaleY,
+                canvas.width * scaleX,
+                canvas.height * scaleY
+            );
+        }
+
+        // ============================================
+        // UI & MENUS
+        // ============================================
+
+        function updateUI() {
+            document.getElementById('score-display').textContent = `Score: ${gameState.score}`;
+
+            const comboDisplay = document.getElementById('combo-display');
+            comboDisplay.textContent = `Combo: x${gameState.combo}`;
+            if (gameState.combo > 1) {
+                comboDisplay.classList.add('pulse');
+                setTimeout(() => comboDisplay.classList.remove('pulse'), 100);
+            }
+
+            document.getElementById('level-display').textContent = `Level ${gameState.level}`;
+
+            const collected = gameState.collectibles.filter(c => c.collected).length;
+            document.getElementById('items-display').textContent = `Items: ${collected}/${gameState.collectibles.length}`;
+
+            // Update lives
+            const livesContainer = document.getElementById('lives-display');
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const life = document.createElement('div');
+                life.className = 'life-icon' + (i >= gameState.lives ? ' lost' : '');
+                livesContainer.appendChild(life);
+            }
+
+            // Update powerup slots
+            for (let i = 0; i < 3; i++) {
+                const slot = document.getElementById(`powerup-${i + 1}`);
+                const powerup = gameState.playerPowerups[i];
+                slot.className = 'powerup-slot' + (powerup ? ' active' : '');
+
+                if (powerup) {
+                    const icons = {
+                        hallpass: '📜',
+                        energydrink: '⚡',
+                        stinkbomb: '💨',
+                        skateboard: '🛹'
+                    };
+                    slot.textContent = icons[powerup];
+                } else {
+                    slot.textContent = '';
+                }
+            }
+        }
+
+        function showMessage(text) {
+            const popup = document.getElementById('message-popup');
+            popup.textContent = text;
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), 1500);
+        }
+
+        function showMenu(id) {
+            document.querySelectorAll('.menu-screen').forEach(m => m.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function hideAllMenus() {
+            document.querySelectorAll('.menu-screen').forEach(m => m.classList.add('hidden'));
+        }
+
+        // ============================================
+        // GAME LOOP & INITIALIZATION
+        // ============================================
+
+        let lastTime = 0;
+
+        function gameLoop(timestamp) {
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            update(Math.min(deltaTime, 0.1)); // Cap delta to prevent physics issues
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            // Reset game state
+            gameState = {
+                running: true,
+                paused: false,
+                score: 0,
+                combo: 1,
+                comboTimer: 0,
+                lives: 3,
+                level: 1,
+                map: [],
+                mapWidth: 0,
+                mapHeight: 0,
+                collectibles: [],
+                powerups: [],
+                activePowerups: [],
+                playerPowerups: [null, null, null],
+                particles: [],
+                screenShake: 0,
+                camera: { x: 0, y: 0 }
+            };
+
+            // Reset player
+            player = {
+                x: 0,
+                y: 0,
+                vx: 0,
+                vy: 0,
+                speed: 4,
+                dashCooldown: 0,
+                isDashing: false,
+                dashTimer: 0,
+                invincible: false,
+                invincibleTimer: 0,
+                speedBoost: false,
+                speedBoostTimer: 0,
+                direction: 0,
+                animFrame: 0
+            };
+
+            // Generate map
+            generateMap();
+
+            // Update UI
+            updateUI();
+            hideAllMenus();
+
+            // Start game
+            gameState.running = true;
+            showMessage('ESCAPE!');
+        }
+
+        function init() {
+            // Settings controls
+            document.getElementById('teacher-count').addEventListener('input', (e) => {
+                settings.teacherCount = parseInt(e.target.value);
+                document.getElementById('teacher-count-display').textContent = settings.teacherCount;
+            });
+
+            document.getElementById('school-type').addEventListener('change', (e) => {
+                settings.schoolType = e.target.value;
+            });
+
+            document.getElementById('map-size').addEventListener('change', (e) => {
+                settings.mapSize = e.target.value;
+            });
+
+            // Menu buttons
+            document.getElementById('start-button').addEventListener('click', startGame);
+            document.getElementById('how-to-play-button').addEventListener('click', () => showMenu('how-to-play-screen'));
+            document.getElementById('back-to-menu-button').addEventListener('click', () => showMenu('main-menu'));
+            document.getElementById('resume-button').addEventListener('click', () => {
+                gameState.paused = false;
+                hideAllMenus();
+            });
+            document.getElementById('quit-button').addEventListener('click', () => {
+                gameState.running = false;
+                showMenu('main-menu');
+            });
+            document.getElementById('retry-button').addEventListener('click', startGame);
+            document.getElementById('menu-button').addEventListener('click', () => showMenu('main-menu'));
+
+            // Keyboard input
+            document.addEventListener('keydown', (e) => {
+                keys[e.code] = true;
+
+                // Dash
+                if (e.code === 'Space' && gameState.running && !gameState.paused) {
+                    if (player.dashCooldown <= 0 && !player.isDashing) {
+                        player.isDashing = true;
+                        player.dashTimer = 0.2;
+                        player.dashCooldown = 1;
+                        gameState.screenShake = 3;
+                    }
+                    e.preventDefault();
+                }
+
+                // Pause
+                if (e.code === 'Escape') {
+                    if (gameState.running) {
+                        gameState.paused = !gameState.paused;
+                        if (gameState.paused) {
+                            showMenu('pause-screen');
+                        } else {
+                            hideAllMenus();
+                        }
+                    }
+                }
+
+                // Use powerups (1, 2, 3)
+                if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') {
+                    const slot = parseInt(e.code.slice(-1)) - 1;
+                    if (gameState.playerPowerups[slot]) {
+                        usePowerup(gameState.playerPowerups[slot]);
+                        gameState.playerPowerups[slot] = null;
+                        updateUI();
+                    }
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                keys[e.code] = false;
+            });
+
+            // Start loops
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
