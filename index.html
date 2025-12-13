@@ -186,6 +186,22 @@
             box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
         }
 
+        .sound-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            font-size: 14px;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sound-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
         .settings-panel {
             background: rgba(255, 255, 255, 0.1);
             padding: 20px;
@@ -346,6 +362,10 @@
                     <input type="range" id="teacher-count" min="2" max="8" value="4">
                     <span id="teacher-count-display">4</span>
                 </div>
+                <div class="setting-row" style="justify-content: center; gap: 20px;">
+                    <button class="sound-btn" id="sound-toggle" onclick="toggleSound()">🔊 Sound: ON</button>
+                    <button class="sound-btn" id="music-toggle" onclick="toggleMusic()">🎵 Music: ON</button>
+                </div>
             </div>
             <button class="menu-button" id="start-button">START GAME</button>
             <button class="menu-button" id="how-to-play-button">HOW TO PLAY</button>
@@ -478,8 +498,283 @@
         let settings = {
             schoolType: 'middle',
             mapSize: 'medium',
-            teacherCount: 4
+            teacherCount: 4,
+            soundEnabled: true,
+            musicEnabled: true
         };
+
+        // ============================================
+        // SOUND SYSTEM
+        // ============================================
+
+        let audioCtx = null;
+        let musicOscillators = [];
+        let musicGain = null;
+
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(type, options = {}) {
+            if (!settings.soundEnabled || !audioCtx) return;
+
+            // Resume audio context if suspended (browser autoplay policy)
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const time = audioCtx.currentTime;
+
+            switch (type) {
+                case 'collect':
+                    // Cheerful ascending ding
+                    playTone(880 + (options.combo || 1) * 50, 0.1, 'sine', 0.3);
+                    playTone(1100 + (options.combo || 1) * 50, 0.1, 'sine', 0.25, 0.05);
+                    break;
+
+                case 'powerup':
+                    // Magical ascending arpeggio
+                    playTone(400, 0.15, 'sine', 0.3);
+                    playTone(500, 0.15, 'sine', 0.25, 0.08);
+                    playTone(600, 0.15, 'sine', 0.2, 0.16);
+                    playTone(800, 0.2, 'sine', 0.3, 0.24);
+                    break;
+
+                case 'powerup_use':
+                    // Activation whoosh
+                    playSweep(200, 800, 0.3, 'sawtooth', 0.2);
+                    break;
+
+                case 'dash':
+                    // Quick whoosh
+                    playSweep(300, 150, 0.15, 'sawtooth', 0.15);
+                    break;
+
+                case 'caught':
+                    // Alarming descending sound
+                    playTone(600, 0.15, 'square', 0.3);
+                    playTone(400, 0.15, 'square', 0.25, 0.1);
+                    playTone(200, 0.3, 'square', 0.2, 0.2);
+                    break;
+
+                case 'alert':
+                    // Teacher spotted you - quick alarm beep
+                    playTone(800, 0.08, 'square', 0.15);
+                    playTone(1000, 0.08, 'square', 0.12, 0.1);
+                    break;
+
+                case 'stun':
+                    // Stink bomb - bubbly explosion
+                    playNoise(0.3, 0.4);
+                    playSweep(400, 100, 0.4, 'sawtooth', 0.2);
+                    break;
+
+                case 'win':
+                    // Victory fanfare
+                    const notes = [523, 659, 784, 1047]; // C E G C
+                    notes.forEach((freq, i) => {
+                        playTone(freq, 0.3, 'sine', 0.3, i * 0.15);
+                        playTone(freq * 1.5, 0.3, 'sine', 0.15, i * 0.15);
+                    });
+                    break;
+
+                case 'lose':
+                    // Game over descending
+                    playTone(400, 0.3, 'sawtooth', 0.25);
+                    playTone(350, 0.3, 'sawtooth', 0.2, 0.25);
+                    playTone(300, 0.5, 'sawtooth', 0.15, 0.5);
+                    break;
+
+                case 'footstep':
+                    // Soft footstep
+                    playNoise(0.03, 0.05);
+                    break;
+
+                case 'slide':
+                    // Wet floor sliding
+                    playSweep(200, 400, 0.1, 'sine', 0.1);
+                    break;
+
+                case 'menu_click':
+                    // UI click
+                    playTone(600, 0.05, 'sine', 0.2);
+                    break;
+
+                case 'menu_hover':
+                    // UI hover
+                    playTone(400, 0.03, 'sine', 0.1);
+                    break;
+            }
+        }
+
+        function playTone(frequency, duration, waveType = 'sine', volume = 0.3, delay = 0) {
+            if (!audioCtx) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.type = waveType;
+            oscillator.frequency.value = frequency;
+
+            const startTime = audioCtx.currentTime + delay;
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration + 0.1);
+        }
+
+        function playSweep(startFreq, endFreq, duration, waveType = 'sine', volume = 0.3) {
+            if (!audioCtx) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.type = waveType;
+            oscillator.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+
+            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration + 0.1);
+        }
+
+        function playNoise(duration, volume = 0.3) {
+            if (!audioCtx) return;
+
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * volume;
+            }
+
+            const noise = audioCtx.createBufferSource();
+            const gainNode = audioCtx.createGain();
+
+            noise.buffer = buffer;
+            noise.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            noise.start();
+        }
+
+        // Background music using simple procedural generation
+        function startMusic() {
+            if (!settings.musicEnabled || !audioCtx) return;
+            stopMusic();
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            musicGain = audioCtx.createGain();
+            musicGain.gain.value = 0.08;
+            musicGain.connect(audioCtx.destination);
+
+            // Create a simple bass line
+            const bassNotes = [130.81, 146.83, 164.81, 146.83]; // C3, D3, E3, D3
+            let noteIndex = 0;
+
+            function playNextNote() {
+                if (!settings.musicEnabled || musicOscillators.length === 0) return;
+
+                const osc = audioCtx.createOscillator();
+                const noteGain = audioCtx.createGain();
+
+                osc.connect(noteGain);
+                noteGain.connect(musicGain);
+
+                osc.type = 'triangle';
+                osc.frequency.value = bassNotes[noteIndex];
+
+                noteGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+
+                noteIndex = (noteIndex + 1) % bassNotes.length;
+            }
+
+            // Start the loop
+            const musicInterval = setInterval(() => {
+                if (settings.musicEnabled && gameState.running && !gameState.paused) {
+                    playNextNote();
+                }
+            }, 500);
+
+            musicOscillators.push({ interval: musicInterval });
+
+            // Add ambient pad
+            const padOsc = audioCtx.createOscillator();
+            const padGain = audioCtx.createGain();
+            const padFilter = audioCtx.createBiquadFilter();
+
+            padOsc.connect(padFilter);
+            padFilter.connect(padGain);
+            padGain.connect(musicGain);
+
+            padOsc.type = 'sawtooth';
+            padOsc.frequency.value = 65.41; // C2
+            padFilter.type = 'lowpass';
+            padFilter.frequency.value = 200;
+            padGain.gain.value = 0.15;
+
+            padOsc.start();
+            musicOscillators.push({ osc: padOsc, gain: padGain });
+        }
+
+        function stopMusic() {
+            musicOscillators.forEach(item => {
+                if (item.interval) clearInterval(item.interval);
+                if (item.osc) {
+                    try {
+                        item.osc.stop();
+                    } catch (e) {}
+                }
+            });
+            musicOscillators = [];
+        }
+
+        function toggleSound() {
+            settings.soundEnabled = !settings.soundEnabled;
+            updateSoundButtons();
+            if (settings.soundEnabled) {
+                playSound('menu_click');
+            }
+        }
+
+        function toggleMusic() {
+            settings.musicEnabled = !settings.musicEnabled;
+            updateSoundButtons();
+            if (settings.musicEnabled && gameState.running) {
+                startMusic();
+            } else {
+                stopMusic();
+            }
+        }
+
+        function updateSoundButtons() {
+            const soundBtn = document.getElementById('sound-toggle');
+            const musicBtn = document.getElementById('music-toggle');
+            if (soundBtn) soundBtn.textContent = settings.soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+            if (musicBtn) musicBtn.textContent = settings.musicEnabled ? '🎵 Music: ON' : '🎵 Music: OFF';
+        }
 
         // ============================================
         // MAP GENERATION
@@ -974,7 +1269,13 @@
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 const sightRange = teacher.type === 'hunter' ? 200 : 150;
 
-                teacher.seesPlayer = dist < sightRange && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
+                const nowSeesPlayer = dist < sightRange && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
+
+                // Play alert sound when teacher first spots player
+                if (nowSeesPlayer && !teacher.seesPlayer) {
+                    playSound('alert');
+                }
+                teacher.seesPlayer = nowSeesPlayer;
 
                 // Different AI behaviors
                 if (teacher.seesPlayer && teacher.type !== 'patrol') {
@@ -1129,6 +1430,9 @@
             const points = 100 * gameState.combo;
             gameState.score += points;
 
+            // Play sound with pitch based on combo
+            playSound('collect', { combo: gameState.combo });
+
             // Spawn particles
             for (let i = 0; i < 10; i++) {
                 spawnParticle(item.x, item.y, 'collect');
@@ -1141,6 +1445,9 @@
         }
 
         function collectPowerup(powerup) {
+            // Play powerup pickup sound
+            playSound('powerup');
+
             // Find empty slot
             const emptySlot = gameState.playerPowerups.findIndex(p => p === null);
             if (emptySlot !== -1) {
@@ -1160,6 +1467,11 @@
         }
 
         function usePowerup(type) {
+            // Play activation sound (stink bomb has its own sound)
+            if (type !== 'stinkbomb') {
+                playSound('powerup_use');
+            }
+
             switch (type) {
                 case 'hallpass':
                     player.invincible = true;
@@ -1172,6 +1484,8 @@
                     showMessage('SPEED BOOST!');
                     break;
                 case 'stinkbomb':
+                    // Play stun sound
+                    playSound('stun');
                     // Stun nearby teachers
                     for (const teacher of teachers) {
                         const dx = player.x - teacher.x;
@@ -1194,6 +1508,9 @@
         }
 
         function playerCaught() {
+            // Play caught sound
+            playSound('caught');
+
             gameState.lives--;
             gameState.combo = 1;
             gameState.screenShake = 10;
@@ -1233,6 +1550,10 @@
 
         function gameOver(won) {
             gameState.running = false;
+            stopMusic();
+
+            // Play win or lose sound
+            playSound(won ? 'win' : 'lose');
 
             const screen = document.getElementById('game-over-screen');
             const title = screen.querySelector('h2');
@@ -1572,6 +1893,44 @@
                     ctx.fillText('⭐', Math.cos(starAngle + Math.PI) * 15, -20 + Math.sin(starAngle + Math.PI) * 5);
                 }
 
+                // Vision cone / visibility circle
+                if (!teacher.stunned) {
+                    const sightRange = teacher.type === 'hunter' ? 200 : 150;
+                    const dirAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+                    const faceAngle = dirAngles[teacher.direction];
+
+                    // Draw vision cone
+                    ctx.save();
+                    ctx.globalAlpha = teacher.seesPlayer ? 0.25 : 0.1;
+
+                    // Create cone gradient
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, sightRange);
+                    if (teacher.seesPlayer) {
+                        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.4)');
+                        gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                    } else {
+                        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.3)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+                    }
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    // Draw a cone in the facing direction
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, sightRange, faceAngle - Math.PI / 3, faceAngle + Math.PI / 3);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Draw outer edge of vision cone
+                    ctx.strokeStyle = teacher.seesPlayer ? 'rgba(255, 0, 0, 0.5)' : 'rgba(255, 255, 0, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, sightRange, faceAngle - Math.PI / 3, faceAngle + Math.PI / 3);
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+
                 // Alert indicator
                 if (teacher.seesPlayer && !teacher.stunned) {
                     ctx.fillStyle = '#ff0000';
@@ -1579,11 +1938,11 @@
                     ctx.fillText('!', 0, -25);
                 }
 
-                // Teacher body
+                // Teacher colors and styles
                 const colors = {
-                    patrol: '#4a90a4',
-                    hunter: '#c0392b',
-                    fast: '#9b59b6'
+                    patrol: '#4a90a4',    // Blue - calm patrol
+                    hunter: '#c0392b',    // Red - aggressive hunter
+                    fast: '#9b59b6'       // Purple - speedy
                 };
 
                 // Shadow
@@ -1592,30 +1951,84 @@
                 ctx.ellipse(0, TEACHER_SIZE / 2 - 5, TEACHER_SIZE / 2, 5, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Body
+                // Body - different shapes for each type
                 ctx.fillStyle = colors[teacher.type];
-                ctx.beginPath();
-                ctx.arc(0, 0, TEACHER_SIZE / 2, 0, Math.PI * 2);
-                ctx.fill();
+                if (teacher.type === 'patrol') {
+                    // Circle body (normal)
+                    ctx.beginPath();
+                    ctx.arc(0, 0, TEACHER_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Clipboard accessory
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(-8, 5, 6, 10);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(-7, 6, 4, 8);
+                } else if (teacher.type === 'hunter') {
+                    // Square-ish body (intimidating)
+                    ctx.beginPath();
+                    ctx.roundRect(-TEACHER_SIZE / 2, -TEACHER_SIZE / 2, TEACHER_SIZE, TEACHER_SIZE, 6);
+                    ctx.fill();
+                    // Angry eyebrows
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-6, -8);
+                    ctx.lineTo(-2, -5);
+                    ctx.moveTo(6, -8);
+                    ctx.lineTo(2, -5);
+                    ctx.stroke();
+                    // Whistle accessory
+                    ctx.fillStyle = '#ffd700';
+                    ctx.beginPath();
+                    ctx.arc(10, 5, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (teacher.type === 'fast') {
+                    // Oval body (aerodynamic)
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, TEACHER_SIZE / 2 - 2, TEACHER_SIZE / 2 + 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Speed lines
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-TEACHER_SIZE / 2 - 5, -3);
+                    ctx.lineTo(-TEACHER_SIZE / 2 - 12, -3);
+                    ctx.moveTo(-TEACHER_SIZE / 2 - 3, 3);
+                    ctx.lineTo(-TEACHER_SIZE / 2 - 10, 3);
+                    ctx.stroke();
+                    // Sneakers (running shoes)
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(-5, TEACHER_SIZE / 2 - 2, 10, 4);
+                }
 
-                // Face direction indicator
+                // Face - eyes that look in movement direction
                 const dirAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
                 const faceAngle = dirAngles[teacher.direction];
+
+                // Eyes
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(Math.cos(faceAngle) * 5, Math.sin(faceAngle) * 5, 4, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#333';
-                ctx.beginPath();
-                ctx.arc(Math.cos(faceAngle) * 7, Math.sin(faceAngle) * 7, 2, 0, Math.PI * 2);
+                ctx.arc(-4, -2, 5, 0, Math.PI * 2);
+                ctx.arc(4, -2, 5, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Teacher type indicator
-                ctx.font = '14px Arial';
+                // Pupils (look in direction of movement)
+                ctx.fillStyle = '#333';
+                const pupilOffset = 2;
+                ctx.beginPath();
+                ctx.arc(-4 + Math.cos(faceAngle) * pupilOffset, -2 + Math.sin(faceAngle) * pupilOffset, 2, 0, Math.PI * 2);
+                ctx.arc(4 + Math.cos(faceAngle) * pupilOffset, -2 + Math.sin(faceAngle) * pupilOffset, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Type label above head
+                ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
-                if (teacher.type === 'hunter') ctx.fillText('😠', 0, 3);
-                else if (teacher.type === 'fast') ctx.fillText('😤', 0, 3);
-                else ctx.fillText('🧐', 0, 3);
+                ctx.fillStyle = colors[teacher.type];
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                const label = teacher.type === 'patrol' ? 'PATROL' : teacher.type === 'hunter' ? 'HUNTER' : 'FAST';
+                ctx.strokeText(label, 0, -TEACHER_SIZE / 2 - 5);
+                ctx.fillText(label, 0, -TEACHER_SIZE / 2 - 5);
 
                 ctx.restore();
             }
@@ -1902,9 +2315,14 @@
             updateUI();
             hideAllMenus();
 
+            // Initialize audio and start music
+            initAudio();
+            startMusic();
+
             // Start game
             gameState.running = true;
             showMessage('ESCAPE!');
+            playSound('menu_click');
         }
 
         function init() {
@@ -1923,19 +2341,40 @@
             });
 
             // Menu buttons
-            document.getElementById('start-button').addEventListener('click', startGame);
-            document.getElementById('how-to-play-button').addEventListener('click', () => showMenu('how-to-play-screen'));
-            document.getElementById('back-to-menu-button').addEventListener('click', () => showMenu('main-menu'));
+            document.getElementById('start-button').addEventListener('click', () => {
+                initAudio();
+                playSound('menu_click');
+                startGame();
+            });
+            document.getElementById('how-to-play-button').addEventListener('click', () => {
+                initAudio();
+                playSound('menu_click');
+                showMenu('how-to-play-screen');
+            });
+            document.getElementById('back-to-menu-button').addEventListener('click', () => {
+                playSound('menu_click');
+                showMenu('main-menu');
+            });
             document.getElementById('resume-button').addEventListener('click', () => {
+                playSound('menu_click');
                 gameState.paused = false;
                 hideAllMenus();
+                startMusic();
             });
             document.getElementById('quit-button').addEventListener('click', () => {
+                playSound('menu_click');
+                stopMusic();
                 gameState.running = false;
                 showMenu('main-menu');
             });
-            document.getElementById('retry-button').addEventListener('click', startGame);
-            document.getElementById('menu-button').addEventListener('click', () => showMenu('main-menu'));
+            document.getElementById('retry-button').addEventListener('click', () => {
+                playSound('menu_click');
+                startGame();
+            });
+            document.getElementById('menu-button').addEventListener('click', () => {
+                playSound('menu_click');
+                showMenu('main-menu');
+            });
 
             // Keyboard input
             document.addEventListener('keydown', (e) => {
@@ -1948,6 +2387,7 @@
                         player.dashTimer = 0.2;
                         player.dashCooldown = 1;
                         gameState.screenShake = 3;
+                        playSound('dash');
                     }
                     e.preventDefault();
                 }
@@ -1957,8 +2397,12 @@
                     if (gameState.running) {
                         gameState.paused = !gameState.paused;
                         if (gameState.paused) {
+                            stopMusic();
+                            playSound('menu_click');
                             showMenu('pause-screen');
                         } else {
+                            playSound('menu_click');
+                            startMusic();
                             hideAllMenus();
                         }
                     }
