@@ -2903,7 +2903,18 @@
 
                 // Teachers can't see well during power outage
                 const effectiveSightRange = gameState.powerOutage ? sightRange * 0.3 : sightRange;
-                const nowSeesPlayer = dist < effectiveSightRange && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
+
+                // Check if player is within the vision cone angle (±60° from facing direction)
+                const dirAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+                const faceAngle = dirAngles[teacher.direction];
+                const angleToPlayer = Math.atan2(dy, dx);
+                let angleDiff = angleToPlayer - faceAngle;
+                // Normalize angle difference to [-π, π]
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                const inCone = Math.abs(angleDiff) <= Math.PI / 3;
+
+                const nowSeesPlayer = dist < effectiveSightRange && inCone && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
 
                 // Play alert sound when teacher first spots player
                 if (nowSeesPlayer && !teacher.seesPlayer) {
