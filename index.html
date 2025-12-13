@@ -2903,7 +2903,18 @@
 
                 // Teachers can't see well during power outage
                 const effectiveSightRange = gameState.powerOutage ? sightRange * 0.3 : sightRange;
-                const nowSeesPlayer = dist < effectiveSightRange && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
+
+                // Check if player is within the vision cone angle (±60° from facing direction)
+                const dirAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+                const faceAngle = dirAngles[teacher.direction];
+                const angleToPlayer = Math.atan2(dy, dx);
+                let angleDiff = angleToPlayer - faceAngle;
+                // Normalize angle difference to [-π, π]
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                const inCone = Math.abs(angleDiff) <= Math.PI / 3;
+
+                const nowSeesPlayer = dist < effectiveSightRange && inCone && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
 
                 // Play alert sound when teacher first spots player
                 if (nowSeesPlayer && !teacher.seesPlayer) {
@@ -3554,16 +3565,16 @@
 
                     // Draw vision cone
                     ctx.save();
-                    ctx.globalAlpha = teacher.seesPlayer ? 0.25 : 0.1;
+                    ctx.globalAlpha = teacher.seesPlayer ? 0.5 : 0.3;
 
                     // Create cone gradient
                     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, sightRange);
                     if (teacher.seesPlayer) {
-                        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.4)');
-                        gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.7)');
+                        gradient.addColorStop(1, 'rgba(255, 0, 0, 0.1)');
                     } else {
-                        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.3)');
-                        gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+                        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.6)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 0, 0.1)');
                     }
 
                     ctx.fillStyle = gradient;
@@ -3575,8 +3586,8 @@
                     ctx.fill();
 
                     // Draw outer edge of vision cone
-                    ctx.strokeStyle = teacher.seesPlayer ? 'rgba(255, 0, 0, 0.5)' : 'rgba(255, 255, 0, 0.3)';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = teacher.seesPlayer ? 'rgba(255, 0, 0, 0.8)' : 'rgba(255, 255, 0, 0.6)';
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
                     ctx.arc(0, 0, sightRange, faceAngle - Math.PI / 3, faceAngle + Math.PI / 3);
                     ctx.stroke();
