@@ -3554,16 +3554,16 @@
 
                     // Draw vision cone
                     ctx.save();
-                    ctx.globalAlpha = teacher.seesPlayer ? 0.25 : 0.1;
+                    ctx.globalAlpha = teacher.seesPlayer ? 0.5 : 0.3;
 
                     // Create cone gradient
                     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, sightRange);
                     if (teacher.seesPlayer) {
-                        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.4)');
-                        gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.7)');
+                        gradient.addColorStop(1, 'rgba(255, 0, 0, 0.1)');
                     } else {
-                        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.3)');
-                        gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+                        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.6)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 0, 0.1)');
                     }
 
                     ctx.fillStyle = gradient;
@@ -3575,8 +3575,8 @@
                     ctx.fill();
 
                     // Draw outer edge of vision cone
-                    ctx.strokeStyle = teacher.seesPlayer ? 'rgba(255, 0, 0, 0.5)' : 'rgba(255, 255, 0, 0.3)';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = teacher.seesPlayer ? 'rgba(255, 0, 0, 0.8)' : 'rgba(255, 255, 0, 0.6)';
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
                     ctx.arc(0, 0, sightRange, faceAngle - Math.PI / 3, faceAngle + Math.PI / 3);
                     ctx.stroke();
