@@ -339,7 +339,24 @@
         <div id="main-menu" class="menu-screen">
             <h1>SCHOOL ESCAPE</h1>
             <h2>Escape the Teachers!</h2>
-            <div class="settings-panel">
+
+            <!-- Game Mode Selection -->
+            <div style="display: flex; gap: 20px; margin: 20px 0;">
+                <button class="menu-button" id="campaign-button" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">📚 CAMPAIGN</button>
+                <button class="menu-button" id="freeplay-button" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">🎮 FREE PLAY</button>
+            </div>
+
+            <!-- Campaign Progress Display -->
+            <div id="campaign-progress-display" class="settings-panel" style="display: none; text-align: center;">
+                <div style="color: #ffd700; font-size: 18px; margin-bottom: 10px;" id="current-level-text">Current Level: Grade 1</div>
+                <div style="width: 100%; height: 15px; background: rgba(255,255,255,0.2); border-radius: 8px; overflow: hidden;">
+                    <div id="menu-progress-bar" style="height: 100%; background: linear-gradient(90deg, #4ade80, #22d3ee); width: 0%; transition: width 0.3s;"></div>
+                </div>
+                <div style="color: #aaa; margin-top: 5px;" id="menu-progress-text">0/17 completed</div>
+            </div>
+
+            <!-- Free Play Settings -->
+            <div id="freeplay-settings" class="settings-panel" style="display: none;">
                 <div class="setting-row">
                     <label>School Type:</label>
                     <select id="school-type">
@@ -362,6 +379,10 @@
                     <input type="range" id="teacher-count" min="2" max="8" value="4">
                     <span id="teacher-count-display">4</span>
                 </div>
+            </div>
+
+            <!-- Common Settings -->
+            <div class="settings-panel">
                 <div class="setting-row">
                     <label>Language:</label>
                     <select id="language-select" onchange="setLanguage(this.value)">
@@ -376,7 +397,8 @@
                     <button class="sound-btn" id="music-toggle" onclick="toggleMusic()">🎵 Music: ON</button>
                 </div>
             </div>
-            <button class="menu-button" id="start-button">START GAME</button>
+
+            <button class="menu-button" id="start-button" style="display: none;">START GAME</button>
             <button class="menu-button" id="how-to-play-button">HOW TO PLAY</button>
         </div>
 
@@ -426,6 +448,31 @@
             <div id="final-stats" style="margin-bottom: 20px; color: #aaa;"></div>
             <button class="menu-button" id="retry-button">PLAY AGAIN</button>
             <button class="menu-button" id="menu-button">MAIN MENU</button>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="level-complete-screen" class="menu-screen hidden">
+            <h2 id="level-complete-title" style="color: #4ade80;">LEVEL COMPLETE!</h2>
+            <div id="level-name-display" style="font-size: 28px; color: #ffd700; margin: 10px 0;"></div>
+            <div id="level-score" style="font-size: 24px; color: #fff; margin: 10px 0;">Score: 0</div>
+            <div id="level-progress" style="margin: 20px 0;">
+                <div style="color: #aaa; margin-bottom: 10px;">Progress</div>
+                <div id="progress-bar-container" style="width: 300px; height: 20px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; margin: 0 auto;">
+                    <div id="progress-bar" style="height: 100%; background: linear-gradient(90deg, #4ade80, #22d3ee); width: 0%; transition: width 0.5s;"></div>
+                </div>
+                <div id="progress-text" style="color: #aaa; margin-top: 5px;">1/17</div>
+            </div>
+            <button class="menu-button" id="next-level-button">NEXT LEVEL</button>
+            <button class="menu-button" id="level-menu-button" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">MAIN MENU</button>
+        </div>
+
+        <!-- Graduation Screen -->
+        <div id="graduation-screen" class="menu-screen hidden">
+            <h2 style="color: #ffd700; font-size: 48px;">🎓 GRADUATED! 🎓</h2>
+            <div id="graduation-message" style="font-size: 20px; color: #fff; margin: 20px 0; max-width: 400px;"></div>
+            <div id="total-score" style="font-size: 32px; color: #4ade80; margin: 20px 0;">Total Score: 0</div>
+            <button class="menu-button" id="new-game-button">NEW GAME</button>
+            <button class="menu-button" id="graduation-menu-button" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">MAIN MENU</button>
         </div>
 
         <!-- Message Popup -->
@@ -512,6 +559,36 @@
             musicEnabled: true,
             language: 'en'
         };
+
+        // Level configuration (17 levels total)
+        const LEVELS = [
+            // Grades 1-9 (Elementary & Middle School)
+            { id: 1,  name: 'grade1',     mapSize: { w: 20, h: 15 }, teachers: 2, speed: 0.6, collectibles: 8,  schoolType: 'elementary' },
+            { id: 2,  name: 'grade2',     mapSize: { w: 22, h: 16 }, teachers: 2, speed: 0.65, collectibles: 10, schoolType: 'elementary' },
+            { id: 3,  name: 'grade3',     mapSize: { w: 24, h: 17 }, teachers: 3, speed: 0.7, collectibles: 12, schoolType: 'elementary' },
+            { id: 4,  name: 'grade4',     mapSize: { w: 26, h: 18 }, teachers: 3, speed: 0.75, collectibles: 14, schoolType: 'elementary' },
+            { id: 5,  name: 'grade5',     mapSize: { w: 28, h: 19 }, teachers: 3, speed: 0.8, collectibles: 15, schoolType: 'middle' },
+            { id: 6,  name: 'grade6',     mapSize: { w: 30, h: 20 }, teachers: 4, speed: 0.85, collectibles: 16, schoolType: 'middle' },
+            { id: 7,  name: 'grade7',     mapSize: { w: 32, h: 22 }, teachers: 4, speed: 0.9, collectibles: 18, schoolType: 'middle' },
+            { id: 8,  name: 'grade8',     mapSize: { w: 34, h: 24 }, teachers: 4, speed: 0.95, collectibles: 20, schoolType: 'middle' },
+            { id: 9,  name: 'grade9',     mapSize: { w: 36, h: 25 }, teachers: 5, speed: 1.0, collectibles: 22, schoolType: 'middle' },
+            // Gymnasium (3 years)
+            { id: 10, name: 'gymnasium1', mapSize: { w: 38, h: 26 }, teachers: 5, speed: 1.05, collectibles: 24, schoolType: 'high' },
+            { id: 11, name: 'gymnasium2', mapSize: { w: 40, h: 28 }, teachers: 5, speed: 1.1, collectibles: 26, schoolType: 'high' },
+            { id: 12, name: 'gymnasium3', mapSize: { w: 42, h: 30 }, teachers: 6, speed: 1.15, collectibles: 28, schoolType: 'high' },
+            // Bachelor (3 years)
+            { id: 13, name: 'bachelor1',  mapSize: { w: 44, h: 32 }, teachers: 6, speed: 1.2, collectibles: 30, schoolType: 'university' },
+            { id: 14, name: 'bachelor2',  mapSize: { w: 46, h: 34 }, teachers: 6, speed: 1.25, collectibles: 32, schoolType: 'university' },
+            { id: 15, name: 'bachelor3',  mapSize: { w: 48, h: 36 }, teachers: 7, speed: 1.3, collectibles: 34, schoolType: 'university' },
+            // Master (2 years)
+            { id: 16, name: 'master1',    mapSize: { w: 50, h: 38 }, teachers: 7, speed: 1.35, collectibles: 36, schoolType: 'university' },
+            { id: 17, name: 'master2',    mapSize: { w: 55, h: 40 }, teachers: 8, speed: 1.4, collectibles: 40, schoolType: 'university' }
+        ];
+
+        // Game mode
+        let gameMode = 'freeplay'; // 'freeplay' or 'campaign'
+        let currentLevel = 0; // 0-indexed
+        let totalCampaignScore = 0; // Total score across all levels in campaign
 
         // ============================================
         // TRANSLATIONS
@@ -604,7 +681,45 @@
                 skateboardMsg: 'SKATEBOARD!',
                 caughtMsg: 'CAUGHT!',
                 livesLeft: 'lives left',
-                got: 'Got'
+                got: 'Got',
+
+                // Game modes
+                freePlay: 'FREE PLAY',
+                campaign: 'CAMPAIGN',
+                selectMode: 'Select Mode',
+                continueGame: 'CONTINUE',
+                newGame: 'NEW GAME',
+
+                // Level names
+                grade1: 'Grade 1',
+                grade2: 'Grade 2',
+                grade3: 'Grade 3',
+                grade4: 'Grade 4',
+                grade5: 'Grade 5',
+                grade6: 'Grade 6',
+                grade7: 'Grade 7',
+                grade8: 'Grade 8',
+                grade9: 'Grade 9',
+                gymnasium1: 'Gymnasium I',
+                gymnasium2: 'Gymnasium II',
+                gymnasium3: 'Gymnasium III',
+                bachelor1: 'Bachelor Year 1',
+                bachelor2: 'Bachelor Year 2',
+                bachelor3: 'Bachelor Year 3',
+                master1: 'Master Year 1',
+                master2: 'Master Year 2',
+
+                // Level complete
+                levelComplete: 'LEVEL COMPLETE!',
+                nextLevel: 'NEXT LEVEL',
+                graduated: 'GRADUATED!',
+                graduatedMsg: 'Congratulations! You have completed all levels!',
+                levelProgress: 'Progress',
+                currentLevel: 'Current Level',
+                completed: 'completed',
+                totalScore: 'Total Score',
+                campaign: 'CAMPAIGN',
+                freePlay: 'FREE PLAY'
             },
 
             et: {
@@ -693,7 +808,45 @@
                 skateboardMsg: 'RULA!',
                 caughtMsg: 'TABATUD!',
                 livesLeft: 'elu jäänud',
-                got: 'Said'
+                got: 'Said',
+
+                // Game modes
+                freePlay: 'VABAMÄNG',
+                campaign: 'KAMPAANIA',
+                selectMode: 'Vali režiim',
+                continueGame: 'JÄTKA',
+                newGame: 'UUS MÄNG',
+
+                // Level names
+                grade1: '1. klass',
+                grade2: '2. klass',
+                grade3: '3. klass',
+                grade4: '4. klass',
+                grade5: '5. klass',
+                grade6: '6. klass',
+                grade7: '7. klass',
+                grade8: '8. klass',
+                grade9: '9. klass',
+                gymnasium1: 'Gümnaasium I',
+                gymnasium2: 'Gümnaasium II',
+                gymnasium3: 'Gümnaasium III',
+                bachelor1: 'Bakalaureus 1. aasta',
+                bachelor2: 'Bakalaureus 2. aasta',
+                bachelor3: 'Bakalaureus 3. aasta',
+                master1: 'Magister 1. aasta',
+                master2: 'Magister 2. aasta',
+
+                // Level complete
+                levelComplete: 'TASE LÄBITUD!',
+                nextLevel: 'JÄRGMINE TASE',
+                graduated: 'LÕPETASID!',
+                graduatedMsg: 'Palju õnne! Oled läbinud kõik tasemed!',
+                levelProgress: 'Edenemine',
+                currentLevel: 'Praegune tase',
+                completed: 'läbitud',
+                totalScore: 'Koguskoor',
+                campaign: 'KAMPAANIA',
+                freePlay: 'VABAMÄNG'
             },
 
             lv: {
@@ -782,7 +935,45 @@
                 skateboardMsg: 'SKRITUĻDĒLIS!',
                 caughtMsg: 'NOĶERTS!',
                 livesLeft: 'dzīvības atlikušas',
-                got: 'Ieguvi'
+                got: 'Ieguvi',
+
+                // Game modes
+                freePlay: 'BRĪVĀ SPĒLE',
+                campaign: 'KAMPAŅA',
+                selectMode: 'Izvēlies režīmu',
+                continueGame: 'TURPINĀT',
+                newGame: 'JAUNA SPĒLE',
+
+                // Level names
+                grade1: '1. klase',
+                grade2: '2. klase',
+                grade3: '3. klase',
+                grade4: '4. klase',
+                grade5: '5. klase',
+                grade6: '6. klase',
+                grade7: '7. klase',
+                grade8: '8. klase',
+                grade9: '9. klase',
+                gymnasium1: 'Ģimnāzija I',
+                gymnasium2: 'Ģimnāzija II',
+                gymnasium3: 'Ģimnāzija III',
+                bachelor1: 'Bakalaurs 1. gads',
+                bachelor2: 'Bakalaurs 2. gads',
+                bachelor3: 'Bakalaurs 3. gads',
+                master1: 'Maģistrs 1. gads',
+                master2: 'Maģistrs 2. gads',
+
+                // Level complete
+                levelComplete: 'LĪMENIS PABEIGTS!',
+                nextLevel: 'NĀKAMAIS LĪMENIS',
+                graduated: 'ABSOLVĒJI!',
+                graduatedMsg: 'Apsveicam! Tu esi pabeidzis visus līmeņus!',
+                levelProgress: 'Progress',
+                currentLevel: 'Pašreizējais līmenis',
+                completed: 'pabeigts',
+                totalScore: 'Kopējie punkti',
+                campaign: 'KAMPAŅA',
+                freePlay: 'BRĪVĀ SPĒLE'
             },
 
             lt: {
@@ -871,7 +1062,45 @@
                 skateboardMsg: 'RIEDLENTĖ!',
                 caughtMsg: 'PAGAUTAS!',
                 livesLeft: 'gyvybės liko',
-                got: 'Gavai'
+                got: 'Gavai',
+
+                // Game modes
+                freePlay: 'LAISVAS ŽAIDIMAS',
+                campaign: 'KAMPANIJA',
+                selectMode: 'Pasirink režimą',
+                continueGame: 'TĘSTI',
+                newGame: 'NAUJAS ŽAIDIMAS',
+
+                // Level names
+                grade1: '1 klasė',
+                grade2: '2 klasė',
+                grade3: '3 klasė',
+                grade4: '4 klasė',
+                grade5: '5 klasė',
+                grade6: '6 klasė',
+                grade7: '7 klasė',
+                grade8: '8 klasė',
+                grade9: '9 klasė',
+                gymnasium1: 'Gimnazija I',
+                gymnasium2: 'Gimnazija II',
+                gymnasium3: 'Gimnazija III',
+                bachelor1: 'Bakalauras 1 metai',
+                bachelor2: 'Bakalauras 2 metai',
+                bachelor3: 'Bakalauras 3 metai',
+                master1: 'Magistras 1 metai',
+                master2: 'Magistras 2 metai',
+
+                // Level complete
+                levelComplete: 'LYGIS BAIGTAS!',
+                nextLevel: 'KITAS LYGIS',
+                graduated: 'BAIGEI!',
+                graduatedMsg: 'Sveikiname! Baigei visus lygius!',
+                levelProgress: 'Progresas',
+                currentLevel: 'Dabartinis lygis',
+                completed: 'baigta',
+                totalScore: 'Bendras rezultatas',
+                campaign: 'KAMPANIJA',
+                freePlay: 'LAISVAS ŽAIDIMAS'
             }
         };
 
@@ -908,6 +1137,10 @@
 
             // Update sound buttons
             updateSoundButtons();
+
+            // Update campaign/freeplay buttons
+            document.getElementById('campaign-button').innerHTML = `📚 ${t('campaign')}`;
+            document.getElementById('freeplay-button').innerHTML = `🎮 ${t('freePlay')}`;
 
             // Update How To Play screen
             document.querySelector('#how-to-play-screen h2').textContent = t('howToPlay');
@@ -1261,8 +1494,23 @@
                 university: { roomChance: 0.6, obstacleChance: 0.25, corridorWidth: 2 }
             };
 
-            const size = sizeConfigs[settings.mapSize];
-            const config = schoolConfigs[settings.schoolType];
+            let size, config, numTeachers, numCollectibles, speedMultiplier;
+
+            if (gameMode === 'campaign') {
+                const level = LEVELS[currentLevel];
+                size = { width: level.mapSize.w, height: level.mapSize.h };
+                config = schoolConfigs[level.schoolType];
+                numTeachers = level.teachers;
+                numCollectibles = level.collectibles;
+                speedMultiplier = level.speed;
+                gameState.level = level.id;
+            } else {
+                size = sizeConfigs[settings.mapSize];
+                config = schoolConfigs[settings.schoolType];
+                numTeachers = settings.teacherCount;
+                numCollectibles = Math.floor(size.width * size.height / 30) + 10;
+                speedMultiplier = 1.0;
+            }
 
             gameState.mapWidth = size.width;
             gameState.mapHeight = size.height;
@@ -1288,13 +1536,13 @@
             placePlayer();
 
             // Place collectibles
-            placeCollectibles();
+            placeCollectibles(numCollectibles);
 
             // Place power-ups
             placePowerups();
 
             // Place teachers
-            placeTeachers();
+            placeTeachers(numTeachers, speedMultiplier);
         }
 
         function generateCorridors(width) {
@@ -1448,12 +1696,12 @@
             }
         }
 
-        function placeCollectibles() {
+        function placeCollectibles(count) {
             gameState.collectibles = [];
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
 
-            const numCollectibles = Math.floor(mapW * mapH / 30) + 10;
+            const numCollectibles = count || Math.floor(mapW * mapH / 30) + 10;
 
             let placed = 0;
             let attempts = 0;
@@ -1508,13 +1756,14 @@
             }
         }
 
-        function placeTeachers() {
+        function placeTeachers(count, speedMultiplier = 1.0) {
             teachers = [];
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
 
             const teacherTypes = ['patrol', 'hunter', 'fast'];
-            const numTeachers = settings.teacherCount;
+            const numTeachers = count || settings.teacherCount;
+            gameState.speedMultiplier = speedMultiplier;
 
             let placed = 0;
             let attempts = 0;
@@ -1550,12 +1799,16 @@
                 university: 1.4
             };
 
+            // Use campaign speed multiplier if in campaign mode
+            const campaignMultiplier = gameState.speedMultiplier || 1.0;
+            const schoolMultiplier = gameMode === 'campaign' ? 1.0 : difficultyMultiplier[settings.schoolType];
+
             return {
                 x: x,
                 y: y,
                 vx: 0,
                 vy: 0,
-                speed: baseSpeed[type] * difficultyMultiplier[settings.schoolType],
+                speed: baseSpeed[type] * schoolMultiplier * campaignMultiplier,
                 type: type,
                 direction: Math.floor(Math.random() * 4),
                 patrolTimer: 0,
@@ -2023,6 +2276,18 @@
             // Play win or lose sound
             playSound(won ? 'win' : 'lose');
 
+            // Add bonus for remaining lives
+            if (won) {
+                gameState.score += gameState.lives * 500;
+            }
+
+            // Campaign mode - show level complete screen
+            if (gameMode === 'campaign' && won) {
+                showLevelCompleteScreen();
+                return;
+            }
+
+            // Free play mode or lost - show game over screen
             const screen = document.getElementById('game-over-screen');
             const title = screen.querySelector('h2');
             const scoreDisplay = document.getElementById('final-score');
@@ -2031,7 +2296,6 @@
             if (won) {
                 title.textContent = t('escaped');
                 screen.className = 'menu-screen win';
-                gameState.score += gameState.lives * 500; // Bonus for remaining lives
             } else {
                 title.textContent = t('caught');
                 screen.className = 'menu-screen lose';
@@ -2671,7 +2935,12 @@
                 setTimeout(() => comboDisplay.classList.remove('pulse'), 100);
             }
 
-            document.getElementById('level-display').textContent = `${t('level')} ${gameState.level}`;
+            if (gameMode === 'campaign') {
+                const level = LEVELS[currentLevel];
+                document.getElementById('level-display').textContent = t(level.name);
+            } else {
+                document.getElementById('level-display').textContent = `${t('level')} ${gameState.level}`;
+            }
 
             const collected = gameState.collectibles.filter(c => c.collected).length;
             document.getElementById('items-display').textContent = `${t('items')}: ${collected}/${gameState.collectibles.length}`;
@@ -2719,6 +2988,67 @@
 
         function hideAllMenus() {
             document.querySelectorAll('.menu-screen').forEach(m => m.classList.add('hidden'));
+        }
+
+        // ============================================
+        // CAMPAIGN MODE FUNCTIONS
+        // ============================================
+
+        function updateCampaignProgress() {
+            const level = LEVELS[currentLevel];
+            document.getElementById('current-level-text').textContent = `${t('currentLevel')}: ${t(level.name)}`;
+            document.getElementById('menu-progress-bar').style.width = `${(currentLevel / LEVELS.length) * 100}%`;
+            document.getElementById('menu-progress-text').textContent = `${currentLevel}/${LEVELS.length} ${t('completed')}`;
+        }
+
+        function saveCampaignProgress() {
+            localStorage.setItem('schoolEscape_currentLevel', currentLevel.toString());
+            localStorage.setItem('schoolEscape_totalScore', totalCampaignScore.toString());
+        }
+
+        function loadCampaignProgress() {
+            const savedLevel = localStorage.getItem('schoolEscape_currentLevel');
+            const savedScore = localStorage.getItem('schoolEscape_totalScore');
+            if (savedLevel !== null) {
+                currentLevel = parseInt(savedLevel);
+            }
+            if (savedScore !== null) {
+                totalCampaignScore = parseInt(savedScore);
+            }
+        }
+
+        function showLevelCompleteScreen() {
+            const level = LEVELS[currentLevel];
+            document.getElementById('level-complete-title').textContent = t('levelComplete');
+            document.getElementById('level-name-display').textContent = t(level.name);
+            document.getElementById('level-score').textContent = `${t('score')}: ${gameState.score}`;
+
+            const progress = ((currentLevel + 1) / LEVELS.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-text').textContent = `${currentLevel + 1}/${LEVELS.length}`;
+
+            document.getElementById('next-level-button').textContent = t('nextLevel');
+            document.getElementById('level-menu-button').textContent = t('mainMenu');
+
+            // Add score to campaign total
+            totalCampaignScore += gameState.score;
+            saveCampaignProgress();
+
+            showMenu('level-complete-screen');
+        }
+
+        function showGraduationScreen() {
+            document.getElementById('graduation-message').textContent = t('graduatedMsg');
+            document.getElementById('total-score').textContent = `${t('totalScore')}: ${totalCampaignScore}`;
+            document.getElementById('new-game-button').textContent = t('newGame');
+            document.getElementById('graduation-menu-button').textContent = t('mainMenu');
+
+            // Reset campaign progress
+            currentLevel = 0;
+            totalCampaignScore = 0;
+            saveCampaignProgress();
+
+            showMenu('graduation-screen');
         }
 
         // ============================================
@@ -2843,6 +3173,67 @@
                 playSound('menu_click');
                 showMenu('main-menu');
             });
+
+            // Campaign mode button
+            document.getElementById('campaign-button').addEventListener('click', () => {
+                playSound('menu_click');
+                gameMode = 'campaign';
+                document.getElementById('campaign-progress-display').style.display = 'block';
+                document.getElementById('freeplay-settings').style.display = 'none';
+                document.getElementById('start-button').style.display = 'block';
+                document.getElementById('campaign-button').style.opacity = '1';
+                document.getElementById('freeplay-button').style.opacity = '0.5';
+                updateCampaignProgress();
+            });
+
+            // Free play mode button
+            document.getElementById('freeplay-button').addEventListener('click', () => {
+                playSound('menu_click');
+                gameMode = 'freeplay';
+                document.getElementById('campaign-progress-display').style.display = 'none';
+                document.getElementById('freeplay-settings').style.display = 'block';
+                document.getElementById('start-button').style.display = 'block';
+                document.getElementById('campaign-button').style.opacity = '0.5';
+                document.getElementById('freeplay-button').style.opacity = '1';
+            });
+
+            // Next level button
+            document.getElementById('next-level-button').addEventListener('click', () => {
+                playSound('menu_click');
+                currentLevel++;
+                if (currentLevel >= LEVELS.length) {
+                    showGraduationScreen();
+                } else {
+                    hideAllMenus();
+                    startGame();
+                }
+            });
+
+            // Level complete - main menu button
+            document.getElementById('level-menu-button').addEventListener('click', () => {
+                playSound('menu_click');
+                saveCampaignProgress();
+                showMenu('main-menu');
+            });
+
+            // Graduation - new game button
+            document.getElementById('new-game-button').addEventListener('click', () => {
+                playSound('menu_click');
+                currentLevel = 0;
+                totalCampaignScore = 0;
+                saveCampaignProgress();
+                hideAllMenus();
+                startGame();
+            });
+
+            // Graduation - main menu button
+            document.getElementById('graduation-menu-button').addEventListener('click', () => {
+                playSound('menu_click');
+                showMenu('main-menu');
+            });
+
+            // Load campaign progress on init
+            loadCampaignProgress();
 
             // Keyboard input
             document.addEventListener('keydown', (e) => {
