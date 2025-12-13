@@ -362,6 +362,15 @@
                     <input type="range" id="teacher-count" min="2" max="8" value="4">
                     <span id="teacher-count-display">4</span>
                 </div>
+                <div class="setting-row">
+                    <label>Language:</label>
+                    <select id="language-select" onchange="setLanguage(this.value)">
+                        <option value="en">English</option>
+                        <option value="et">Eesti</option>
+                        <option value="lv">Latviešu</option>
+                        <option value="lt">Lietuvių</option>
+                    </select>
+                </div>
                 <div class="setting-row" style="justify-content: center; gap: 20px;">
                     <button class="sound-btn" id="sound-toggle" onclick="toggleSound()">🔊 Sound: ON</button>
                     <button class="sound-btn" id="music-toggle" onclick="toggleMusic()">🎵 Music: ON</button>
@@ -500,8 +509,466 @@
             mapSize: 'medium',
             teacherCount: 4,
             soundEnabled: true,
-            musicEnabled: true
+            musicEnabled: true,
+            language: 'en'
         };
+
+        // ============================================
+        // TRANSLATIONS
+        // ============================================
+
+        const translations = {
+            en: {
+                // Main Menu
+                title: 'SCHOOL ESCAPE',
+                subtitle: 'Escape the Teachers!',
+                startGame: 'START GAME',
+                howToPlay: 'HOW TO PLAY',
+                backToMenu: 'BACK TO MENU',
+
+                // Settings
+                schoolType: 'School Type:',
+                elementary: 'Elementary (Easy)',
+                middleSchool: 'Middle School (Medium)',
+                highSchool: 'High School (Hard)',
+                university: 'University (Expert)',
+                mapSize: 'Map Size:',
+                small: 'Small',
+                medium: 'Medium',
+                large: 'Large',
+                teachers: 'Teachers:',
+                language: 'Language:',
+                soundOn: '🔊 Sound: ON',
+                soundOff: '🔇 Sound: OFF',
+                musicOn: '🎵 Music: ON',
+                musicOff: '🎵 Music: OFF',
+
+                // Game UI
+                score: 'Score',
+                combo: 'Combo',
+                level: 'Level',
+                items: 'Items',
+                move: 'Move',
+                dash: 'Dash',
+                usePowerup: 'Use Power-up',
+                pause: 'Pause',
+
+                // Power-ups
+                hallPass: 'Hall Pass',
+                energyDrink: 'Energy Drink',
+                stinkBomb: 'Stink Bomb',
+                skateboard: 'Skateboard',
+
+                // How To Play
+                objective: 'OBJECTIVE:',
+                objectiveText: 'Collect all homework pages and reach the exit without getting caught by teachers!',
+                controls: 'CONTROLS:',
+                controlMove: 'WASD or Arrow Keys - Move',
+                controlDash: 'SPACE - Dash (quick burst of speed)',
+                controlPowerup: '1, 2, 3 - Use collected power-ups',
+                controlPause: 'ESC - Pause game',
+                powerups: 'POWER-UPS:',
+                hallPassDesc: 'Hall Pass - Temporary invincibility',
+                energyDrinkDesc: 'Energy Drink - Super speed',
+                stinkBombDesc: 'Stink Bomb - Stuns nearby teachers',
+                skateboardDesc: 'Skateboard - Fast movement',
+                teachersTitle: 'TEACHERS:',
+                patrolDesc: 'Patrol Teacher - Follows set routes',
+                hunterDesc: 'Hunter Teacher - Actively chases you',
+                fastDesc: 'Fast Teacher - Quick but predictable',
+
+                // Teacher labels
+                patrol: 'PATROL',
+                hunter: 'HUNTER',
+                fast: 'FAST',
+
+                // Pause Screen
+                paused: 'PAUSED',
+                resume: 'RESUME',
+                quitToMenu: 'QUIT TO MENU',
+
+                // Game Over
+                escaped: 'ESCAPED!',
+                caught: 'CAUGHT!',
+                gameOver: 'GAME OVER',
+                playAgain: 'PLAY AGAIN',
+                mainMenu: 'MAIN MENU',
+                itemsCollected: 'Items',
+                livesRemaining: 'Lives remaining',
+
+                // In-game messages
+                escape: 'ESCAPE!',
+                invincible: 'INVINCIBLE!',
+                speedBoost: 'SPEED BOOST!',
+                stinkBombMsg: 'STINK BOMB!',
+                skateboardMsg: 'SKATEBOARD!',
+                caughtMsg: 'CAUGHT!',
+                livesLeft: 'lives left',
+                got: 'Got'
+            },
+
+            et: {
+                // Main Menu
+                title: 'KOOLIST PÕGENEMINE',
+                subtitle: 'Põgene õpetajate eest!',
+                startGame: 'ALUSTA MÄNGU',
+                howToPlay: 'KUIDAS MÄNGIDA',
+                backToMenu: 'TAGASI MENÜÜSSE',
+
+                // Settings
+                schoolType: 'Kooli tüüp:',
+                elementary: 'Algkool (Lihtne)',
+                middleSchool: 'Põhikool (Keskmine)',
+                highSchool: 'Gümnaasium (Raske)',
+                university: 'Ülikool (Ekspert)',
+                mapSize: 'Kaardi suurus:',
+                small: 'Väike',
+                medium: 'Keskmine',
+                large: 'Suur',
+                teachers: 'Õpetajad:',
+                language: 'Keel:',
+                soundOn: '🔊 Heli: SEES',
+                soundOff: '🔇 Heli: VÄLJAS',
+                musicOn: '🎵 Muusika: SEES',
+                musicOff: '🎵 Muusika: VÄLJAS',
+
+                // Game UI
+                score: 'Skoor',
+                combo: 'Kombo',
+                level: 'Tase',
+                items: 'Esemed',
+                move: 'Liigu',
+                dash: 'Spurdi',
+                usePowerup: 'Kasuta võimendust',
+                pause: 'Paus',
+
+                // Power-ups
+                hallPass: 'Koridoriluba',
+                energyDrink: 'Energiajook',
+                stinkBomb: 'Haisupomm',
+                skateboard: 'Rula',
+
+                // How To Play
+                objective: 'EESMÄRK:',
+                objectiveText: 'Kogu kõik kodutöö lehed ja jõua väljapääsuni ilma õpetajate kätte jäämata!',
+                controls: 'JUHTIMINE:',
+                controlMove: 'WASD või Nooleklahvid - Liigu',
+                controlDash: 'TÜHIK - Spurdi (kiire kiirendus)',
+                controlPowerup: '1, 2, 3 - Kasuta kogutud võimendusi',
+                controlPause: 'ESC - Peata mäng',
+                powerups: 'VÕIMENDUSED:',
+                hallPassDesc: 'Koridoriluba - Ajutine puutumatus',
+                energyDrinkDesc: 'Energiajook - Superkiirus',
+                stinkBombDesc: 'Haisupomm - Uimastab lähedal olevad õpetajad',
+                skateboardDesc: 'Rula - Kiire liikumine',
+                teachersTitle: 'ÕPETAJAD:',
+                patrolDesc: 'Patrullõpetaja - Järgib kindlaid marsruute',
+                hunterDesc: 'Jahtija-õpetaja - Jälitab sind aktiivselt',
+                fastDesc: 'Kiire õpetaja - Kiire, kuid etteaimatav',
+
+                // Teacher labels
+                patrol: 'PATRULL',
+                hunter: 'JAHTIJA',
+                fast: 'KIIRE',
+
+                // Pause Screen
+                paused: 'PEATATUD',
+                resume: 'JÄTKA',
+                quitToMenu: 'TAGASI MENÜÜSSE',
+
+                // Game Over
+                escaped: 'PÕGENESID!',
+                caught: 'TABATUD!',
+                gameOver: 'MÄNG LÄBI',
+                playAgain: 'MÄNGI UUESTI',
+                mainMenu: 'PEAMENÜÜ',
+                itemsCollected: 'Esemed',
+                livesRemaining: 'Elusid jäänud',
+
+                // In-game messages
+                escape: 'PÕGENE!',
+                invincible: 'PUUTUMATU!',
+                speedBoost: 'KIIRUSE TÕUS!',
+                stinkBombMsg: 'HAISUPOMM!',
+                skateboardMsg: 'RULA!',
+                caughtMsg: 'TABATUD!',
+                livesLeft: 'elu jäänud',
+                got: 'Said'
+            },
+
+            lv: {
+                // Main Menu
+                title: 'BĒGŠANA NO SKOLAS',
+                subtitle: 'Izbēdz no skolotājiem!',
+                startGame: 'SĀKT SPĒLI',
+                howToPlay: 'KĀ SPĒLĒT',
+                backToMenu: 'ATPAKAĻ UZ IZVĒLNI',
+
+                // Settings
+                schoolType: 'Skolas tips:',
+                elementary: 'Pamatskola (Viegli)',
+                middleSchool: 'Vidusskola (Vidēji)',
+                highSchool: 'Ģimnāzija (Grūti)',
+                university: 'Universitāte (Eksperts)',
+                mapSize: 'Kartes izmērs:',
+                small: 'Mazs',
+                medium: 'Vidējs',
+                large: 'Liels',
+                teachers: 'Skolotāji:',
+                language: 'Valoda:',
+                soundOn: '🔊 Skaņa: IESLĒGTA',
+                soundOff: '🔇 Skaņa: IZSLĒGTA',
+                musicOn: '🎵 Mūzika: IESLĒGTA',
+                musicOff: '🎵 Mūzika: IZSLĒGTA',
+
+                // Game UI
+                score: 'Punkti',
+                combo: 'Kombo',
+                level: 'Līmenis',
+                items: 'Priekšmeti',
+                move: 'Kustēties',
+                dash: 'Sprints',
+                usePowerup: 'Lietot bonusu',
+                pause: 'Pauze',
+
+                // Power-ups
+                hallPass: 'Koridora caurlaide',
+                energyDrink: 'Enerģijas dzēriens',
+                stinkBomb: 'Smirdīgā bumba',
+                skateboard: 'Skrituļdēlis',
+
+                // How To Play
+                objective: 'MĒRĶIS:',
+                objectiveText: 'Savāc visas mājasdarbu lapas un aizsniedz izeju, neiekļūstot skolotāju rokās!',
+                controls: 'VADĪBA:',
+                controlMove: 'WASD vai Bultiņas - Kustēties',
+                controlDash: 'ATSTARPE - Sprints (ātrs ātruma uzplūds)',
+                controlPowerup: '1, 2, 3 - Lietot savāktos bonusus',
+                controlPause: 'ESC - Pauze',
+                powerups: 'BONUSI:',
+                hallPassDesc: 'Koridora caurlaide - Īslaicīga neaizskaramība',
+                energyDrinkDesc: 'Enerģijas dzēriens - Super ātrums',
+                stinkBombDesc: 'Smirdīgā bumba - Apdullina tuvumā esošos skolotājus',
+                skateboardDesc: 'Skrituļdēlis - Ātra pārvietošanās',
+                teachersTitle: 'SKOLOTĀJI:',
+                patrolDesc: 'Patruļas skolotājs - Seko noteiktiem maršrutiem',
+                hunterDesc: 'Mednieka skolotājs - Aktīvi tevi vajā',
+                fastDesc: 'Ātrais skolotājs - Ātrs, bet paredzams',
+
+                // Teacher labels
+                patrol: 'PATRULA',
+                hunter: 'MEDNIEKS',
+                fast: 'ĀTRAIS',
+
+                // Pause Screen
+                paused: 'PAUZE',
+                resume: 'TURPINĀT',
+                quitToMenu: 'UZ IZVĒLNI',
+
+                // Game Over
+                escaped: 'IZBĒGI!',
+                caught: 'NOĶERTS!',
+                gameOver: 'SPĒLE BEIGUSIES',
+                playAgain: 'SPĒLĒT VĒLREIZ',
+                mainMenu: 'GALVENĀ IZVĒLNE',
+                itemsCollected: 'Priekšmeti',
+                livesRemaining: 'Atlikušās dzīvības',
+
+                // In-game messages
+                escape: 'BĒDZ!',
+                invincible: 'NEAIZSKARAMS!',
+                speedBoost: 'ĀTRUMA PALIELINĀJUMS!',
+                stinkBombMsg: 'SMIRDĪGĀ BUMBA!',
+                skateboardMsg: 'SKRITUĻDĒLIS!',
+                caughtMsg: 'NOĶERTS!',
+                livesLeft: 'dzīvības atlikušas',
+                got: 'Ieguvi'
+            },
+
+            lt: {
+                // Main Menu
+                title: 'PABĖGIMAS IŠ MOKYKLOS',
+                subtitle: 'Pabėk nuo mokytojų!',
+                startGame: 'PRADĖTI ŽAIDIMĄ',
+                howToPlay: 'KAIP ŽAISTI',
+                backToMenu: 'GRĮŽTI Į MENIU',
+
+                // Settings
+                schoolType: 'Mokyklos tipas:',
+                elementary: 'Pradinė (Lengva)',
+                middleSchool: 'Pagrindinė (Vidutinė)',
+                highSchool: 'Gimnazija (Sunki)',
+                university: 'Universitetas (Ekspertas)',
+                mapSize: 'Žemėlapio dydis:',
+                small: 'Mažas',
+                medium: 'Vidutinis',
+                large: 'Didelis',
+                teachers: 'Mokytojai:',
+                language: 'Kalba:',
+                soundOn: '🔊 Garsas: ĮJUNGTAS',
+                soundOff: '🔇 Garsas: IŠJUNGTAS',
+                musicOn: '🎵 Muzika: ĮJUNGTA',
+                musicOff: '🎵 Muzika: IŠJUNGTA',
+
+                // Game UI
+                score: 'Taškai',
+                combo: 'Kombo',
+                level: 'Lygis',
+                items: 'Daiktai',
+                move: 'Judėti',
+                dash: 'Sprintas',
+                usePowerup: 'Naudoti galią',
+                pause: 'Pauzė',
+
+                // Power-ups
+                hallPass: 'Koridoriaus leidimas',
+                energyDrink: 'Energinis gėrimas',
+                stinkBomb: 'Smirdanti bomba',
+                skateboard: 'Riedlentė',
+
+                // How To Play
+                objective: 'TIKSLAS:',
+                objectiveText: 'Surink visus namų darbų lapus ir pasiek išėjimą nepakliuvęs mokytojams!',
+                controls: 'VALDYMAS:',
+                controlMove: 'WASD arba Rodyklės - Judėti',
+                controlDash: 'TARPAS - Sprintas (greitas pagreitis)',
+                controlPowerup: '1, 2, 3 - Naudoti surinktus galių stiprintuvus',
+                controlPause: 'ESC - Pauzė',
+                powerups: 'GALIŲ STIPRINTUVAI:',
+                hallPassDesc: 'Koridoriaus leidimas - Laikinas neliečiamumas',
+                energyDrinkDesc: 'Energinis gėrimas - Super greitis',
+                stinkBombDesc: 'Smirdanti bomba - Apsvaigia netoliese esančius mokytojus',
+                skateboardDesc: 'Riedlentė - Greitas judėjimas',
+                teachersTitle: 'MOKYTOJAI:',
+                patrolDesc: 'Patruliuojantis mokytojas - Seka nustatytus maršrutus',
+                hunterDesc: 'Medžiotojas mokytojas - Aktyviai tave vejasi',
+                fastDesc: 'Greitas mokytojas - Greitas, bet nuspėjamas',
+
+                // Teacher labels
+                patrol: 'PATRULĖ',
+                hunter: 'MEDŽIOT.',
+                fast: 'GREITAS',
+
+                // Pause Screen
+                paused: 'PAUZĖ',
+                resume: 'TĘSTI',
+                quitToMenu: 'Į MENIU',
+
+                // Game Over
+                escaped: 'PABĖGAI!',
+                caught: 'PAGAUTAS!',
+                gameOver: 'ŽAIDIMAS BAIGTAS',
+                playAgain: 'ŽAISTI DAR KARTĄ',
+                mainMenu: 'PAGRINDINIS MENIU',
+                itemsCollected: 'Daiktai',
+                livesRemaining: 'Likusios gyvybės',
+
+                // In-game messages
+                escape: 'BĖKK!',
+                invincible: 'NELIEČIAMAS!',
+                speedBoost: 'GREIČIO PADIDINIMAS!',
+                stinkBombMsg: 'SMIRDANTI BOMBA!',
+                skateboardMsg: 'RIEDLENTĖ!',
+                caughtMsg: 'PAGAUTAS!',
+                livesLeft: 'gyvybės liko',
+                got: 'Gavai'
+            }
+        };
+
+        function t(key) {
+            return translations[settings.language][key] || translations.en[key] || key;
+        }
+
+        function updateLanguage() {
+            // Update main menu
+            document.querySelector('#main-menu h1').textContent = t('title');
+            document.querySelector('#main-menu h2').textContent = t('subtitle');
+            document.getElementById('start-button').textContent = t('startGame');
+            document.getElementById('how-to-play-button').textContent = t('howToPlay');
+
+            // Update settings labels
+            const settingLabels = document.querySelectorAll('.setting-row label');
+            if (settingLabels[0]) settingLabels[0].textContent = t('schoolType');
+            if (settingLabels[1]) settingLabels[1].textContent = t('mapSize');
+            if (settingLabels[2]) settingLabels[2].textContent = t('teachers');
+            if (settingLabels[3]) settingLabels[3].textContent = t('language');
+
+            // Update school type options
+            const schoolTypeSelect = document.getElementById('school-type');
+            schoolTypeSelect.options[0].textContent = t('elementary');
+            schoolTypeSelect.options[1].textContent = t('middleSchool');
+            schoolTypeSelect.options[2].textContent = t('highSchool');
+            schoolTypeSelect.options[3].textContent = t('university');
+
+            // Update map size options
+            const mapSizeSelect = document.getElementById('map-size');
+            mapSizeSelect.options[0].textContent = t('small');
+            mapSizeSelect.options[1].textContent = t('medium');
+            mapSizeSelect.options[2].textContent = t('large');
+
+            // Update sound buttons
+            updateSoundButtons();
+
+            // Update How To Play screen
+            document.querySelector('#how-to-play-screen h2').textContent = t('howToPlay');
+            document.getElementById('back-to-menu-button').textContent = t('backToMenu');
+
+            // Update how to play content
+            const howToPlayContent = document.querySelector('#how-to-play-screen .settings-panel');
+            howToPlayContent.innerHTML = `
+                <p style="margin-bottom: 15px;"><strong style="color: #4ade80;">${t('objective')}</strong> ${t('objectiveText')}</p>
+                <p style="margin-bottom: 15px;"><strong style="color: #60a5fa;">${t('controls')}</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>${t('controlMove')}</li>
+                    <li>${t('controlDash')}</li>
+                    <li>${t('controlPowerup')}</li>
+                    <li>${t('controlPause')}</li>
+                </ul>
+                <p style="margin-bottom: 15px;"><strong style="color: #ffd700;">${t('powerups')}</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>📜 ${t('hallPassDesc')}</li>
+                    <li>⚡ ${t('energyDrinkDesc')}</li>
+                    <li>💨 ${t('stinkBombDesc')}</li>
+                    <li>🛹 ${t('skateboardDesc')}</li>
+                </ul>
+                <p style="margin-bottom: 15px;"><strong style="color: #ff6b6b;">${t('teachersTitle')}</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li><span style="display:inline-block;width:16px;height:16px;background:#4a90a4;border-radius:50%;vertical-align:middle;margin-right:5px;"></span> ${t('patrolDesc')}</li>
+                    <li><span style="display:inline-block;width:16px;height:16px;background:#c0392b;border-radius:3px;vertical-align:middle;margin-right:5px;"></span> ${t('hunterDesc')}</li>
+                    <li><span style="display:inline-block;width:16px;height:12px;background:#9b59b6;border-radius:50%;vertical-align:middle;margin-right:5px;"></span> ${t('fastDesc')}</li>
+                </ul>
+            `;
+
+            // Update Pause screen
+            document.querySelector('#pause-screen h2').textContent = t('paused');
+            document.getElementById('resume-button').textContent = t('resume');
+            document.getElementById('quit-button').textContent = t('quitToMenu');
+
+            // Update Game Over screen
+            document.getElementById('retry-button').textContent = t('playAgain');
+            document.getElementById('menu-button').textContent = t('mainMenu');
+
+            // Update footer hints
+            const footerHints = document.querySelectorAll('#game-footer .key-hint');
+            if (footerHints[0]) footerHints[0].innerHTML = `<span class="key">WASD</span> / <span class="key">←↑↓→</span> ${t('move')}`;
+            if (footerHints[1]) footerHints[1].innerHTML = `<span class="key">SPACE</span> ${t('dash')}`;
+            if (footerHints[2]) footerHints[2].innerHTML = `<span class="key">1-3</span> ${t('usePowerup')}`;
+            if (footerHints[3]) footerHints[3].innerHTML = `<span class="key">ESC</span> ${t('pause')}`;
+
+            // Update power-up slot titles
+            document.getElementById('powerup-1').title = t('hallPass');
+            document.getElementById('powerup-2').title = t('energyDrink');
+            document.getElementById('powerup-3').title = t('stinkBomb');
+
+            // Update UI displays
+            updateUI();
+        }
+
+        function setLanguage(lang) {
+            settings.language = lang;
+            updateLanguage();
+            playSound('menu_click');
+        }
 
         // ============================================
         // SOUND SYSTEM
@@ -772,8 +1239,8 @@
         function updateSoundButtons() {
             const soundBtn = document.getElementById('sound-toggle');
             const musicBtn = document.getElementById('music-toggle');
-            if (soundBtn) soundBtn.textContent = settings.soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
-            if (musicBtn) musicBtn.textContent = settings.musicEnabled ? '🎵 Music: ON' : '🎵 Music: OFF';
+            if (soundBtn) soundBtn.textContent = settings.soundEnabled ? t('soundOn') : t('soundOff');
+            if (musicBtn) musicBtn.textContent = settings.musicEnabled ? t('musicOn') : t('musicOff');
         }
 
         // ============================================
@@ -1452,7 +1919,8 @@
             const emptySlot = gameState.playerPowerups.findIndex(p => p === null);
             if (emptySlot !== -1) {
                 gameState.playerPowerups[emptySlot] = powerup.type;
-                showMessage(`Got ${powerup.type.toUpperCase()}!`);
+                const powerupNames = { hallpass: t('hallPass'), energydrink: t('energyDrink'), stinkbomb: t('stinkBomb'), skateboard: t('skateboard') };
+                showMessage(`${t('got')} ${powerupNames[powerup.type]}!`);
             } else {
                 // Apply immediately if inventory full
                 usePowerup(powerup.type);
@@ -1476,12 +1944,12 @@
                 case 'hallpass':
                     player.invincible = true;
                     player.invincibleTimer = 5;
-                    showMessage('INVINCIBLE!');
+                    showMessage(t('invincible'));
                     break;
                 case 'energydrink':
                     player.speedBoost = true;
                     player.speedBoostTimer = 8;
-                    showMessage('SPEED BOOST!');
+                    showMessage(t('speedBoost'));
                     break;
                 case 'stinkbomb':
                     // Play stun sound
@@ -1496,13 +1964,13 @@
                             teacher.stunnedTimer = 4;
                         }
                     }
-                    showMessage('STINK BOMB!');
+                    showMessage(t('stinkBombMsg'));
                     gameState.screenShake = 5;
                     break;
                 case 'skateboard':
                     player.speedBoost = true;
                     player.speedBoostTimer = 10;
-                    showMessage('SKATEBOARD!');
+                    showMessage(t('skateboardMsg'));
                     break;
             }
         }
@@ -1526,7 +1994,7 @@
                 // Brief invincibility and reset position
                 player.invincible = true;
                 player.invincibleTimer = 2;
-                showMessage('CAUGHT! ' + gameState.lives + ' lives left');
+                showMessage(`${t('caughtMsg')} ${gameState.lives} ${t('livesLeft')}`);
             }
 
             updateUI();
@@ -1561,18 +2029,18 @@
             const statsDisplay = document.getElementById('final-stats');
 
             if (won) {
-                title.textContent = 'ESCAPED!';
+                title.textContent = t('escaped');
                 screen.className = 'menu-screen win';
                 gameState.score += gameState.lives * 500; // Bonus for remaining lives
             } else {
-                title.textContent = 'CAUGHT!';
+                title.textContent = t('caught');
                 screen.className = 'menu-screen lose';
             }
 
-            scoreDisplay.textContent = `Score: ${gameState.score}`;
+            scoreDisplay.textContent = `${t('score')}: ${gameState.score}`;
             statsDisplay.innerHTML = `
-                Items: ${gameState.collectibles.filter(c => c.collected).length}/${gameState.collectibles.length}<br>
-                Lives remaining: ${gameState.lives}
+                ${t('itemsCollected')}: ${gameState.collectibles.filter(c => c.collected).length}/${gameState.collectibles.length}<br>
+                ${t('livesRemaining')}: ${gameState.lives}
             `;
 
             screen.classList.remove('hidden');
@@ -2026,7 +2494,7 @@
                 ctx.fillStyle = colors[teacher.type];
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
-                const label = teacher.type === 'patrol' ? 'PATROL' : teacher.type === 'hunter' ? 'HUNTER' : 'FAST';
+                const label = teacher.type === 'patrol' ? t('patrol') : teacher.type === 'hunter' ? t('hunter') : t('fast');
                 ctx.strokeText(label, 0, -TEACHER_SIZE / 2 - 5);
                 ctx.fillText(label, 0, -TEACHER_SIZE / 2 - 5);
 
@@ -2194,19 +2662,19 @@
         // ============================================
 
         function updateUI() {
-            document.getElementById('score-display').textContent = `Score: ${gameState.score}`;
+            document.getElementById('score-display').textContent = `${t('score')}: ${gameState.score}`;
 
             const comboDisplay = document.getElementById('combo-display');
-            comboDisplay.textContent = `Combo: x${gameState.combo}`;
+            comboDisplay.textContent = `${t('combo')}: x${gameState.combo}`;
             if (gameState.combo > 1) {
                 comboDisplay.classList.add('pulse');
                 setTimeout(() => comboDisplay.classList.remove('pulse'), 100);
             }
 
-            document.getElementById('level-display').textContent = `Level ${gameState.level}`;
+            document.getElementById('level-display').textContent = `${t('level')} ${gameState.level}`;
 
             const collected = gameState.collectibles.filter(c => c.collected).length;
-            document.getElementById('items-display').textContent = `Items: ${collected}/${gameState.collectibles.length}`;
+            document.getElementById('items-display').textContent = `${t('items')}: ${collected}/${gameState.collectibles.length}`;
 
             // Update lives
             const livesContainer = document.getElementById('lives-display');
@@ -2321,7 +2789,7 @@
 
             // Start game
             gameState.running = true;
-            showMessage('ESCAPE!');
+            showMessage(t('escape'));
             playSound('menu_click');
         }
 
@@ -2422,6 +2890,9 @@
             document.addEventListener('keyup', (e) => {
                 keys[e.code] = false;
             });
+
+            // Initialize language
+            updateLanguage();
 
             // Start loops
             render();
