@@ -395,6 +395,7 @@
                         <option value="et">Eesti</option>
                         <option value="lv">Latviešu</option>
                         <option value="lt">Lietuvių</option>
+                        <option value="ru">Русский</option>
                     </select>
                 </div>
                 <div class="setting-row" style="justify-content: center; gap: 20px;">
@@ -1110,6 +1111,102 @@
                 totalScore: 'Bendras rezultatas',
                 campaign: 'KAMPANIJA',
                 freePlay: 'LAISVAS ŽAIDIMAS'
+            },
+
+            ru: {
+                // Main Menu
+                title: 'ПОБЕГ ИЗ ШКОЛЫ',
+                subtitle: 'Убеги от учителей!',
+                startGame: 'НАЧАТЬ ИГРУ',
+                howToPlay: 'КАК ИГРАТЬ',
+                backToMenu: 'НАЗАД В МЕНЮ',
+
+                // Settings
+                schoolType: 'Тип школы:',
+                elementary: 'Начальная (Легко)',
+                middleSchool: 'Средняя (Нормально)',
+                highSchool: 'Гимназия (Сложно)',
+                university: 'Университет (Эксперт)',
+                mapSize: 'Размер карты:',
+                small: 'Маленький',
+                medium: 'Средний',
+                large: 'Большой',
+                teachers: 'Учителя:',
+                language: 'Язык:',
+                soundOn: '🔊 Звук: ВКЛ',
+                soundOff: '🔇 Звук: ВЫКЛ',
+                musicOn: '🎵 Музыка: ВКЛ',
+                musicOff: '🎵 Музыка: ВЫКЛ',
+
+                // Game UI
+                score: 'Очки',
+                combo: 'Комбо',
+                level: 'Уровень',
+                items: 'Предметы',
+
+                // How to Play
+                objective: 'ЦЕЛЬ:',
+                objectiveText: 'Собери все домашние задания и доберись до выхода, не попавшись учителям!',
+                controls: 'УПРАВЛЕНИЕ:',
+                moveKeys: 'WASD или Стрелки - Движение',
+                dashKey: 'ПРОБЕЛ - Рывок',
+                powerupKeys: '1, 2, 3 - Использовать бонус',
+                pauseKey: 'ESC - Пауза',
+                powerups: 'БОНУСЫ:',
+                hallPass: 'Пропуск - Временная неуязвимость',
+                energyDrink: 'Энергетик - Супер скорость',
+                stinkBomb: 'Вонючая бомба - Оглушает учителей',
+                skateboard: 'Скейтборд - Быстрое передвижение',
+                teacherTypes: 'УЧИТЕЛЯ:',
+                patrolTeacher: 'Патрульный - Ходит по маршруту',
+                hunterTeacher: 'Охотник - Активно преследует',
+                fastTeacher: 'Быстрый - Скоростной, но предсказуемый',
+
+                // Game Over
+                escaped: 'СБЕЖАЛ!',
+                caught: 'ПОЙМАН!',
+                playAgain: 'ИГРАТЬ СНОВА',
+                mainMenu: 'ГЛАВНОЕ МЕНЮ',
+                itemsCollected: 'Собрано предметов',
+                livesRemaining: 'Осталось жизней',
+
+                // In-game messages
+                escape: 'Беги к выходу!',
+                paused: 'ПАУЗА',
+                resume: 'ПРОДОЛЖИТЬ',
+                quit: 'ВЫЙТИ В МЕНЮ',
+                newGame: 'НОВАЯ ИГРА',
+
+                // Level names
+                grade1: '1 Класс',
+                grade2: '2 Класс',
+                grade3: '3 Класс',
+                grade4: '4 Класс',
+                grade5: '5 Класс',
+                grade6: '6 Класс',
+                grade7: '7 Класс',
+                grade8: '8 Класс',
+                grade9: '9 Класс',
+                gymnasium1: 'Гимназия I',
+                gymnasium2: 'Гимназия II',
+                gymnasium3: 'Гимназия III',
+                bachelor1: 'Бакалавр 1 год',
+                bachelor2: 'Бакалавр 2 год',
+                bachelor3: 'Бакалавр 3 год',
+                master1: 'Магистр 1 год',
+                master2: 'Магистр 2 год',
+
+                // Level complete
+                levelComplete: 'УРОВЕНЬ ПРОЙДЕН!',
+                nextLevel: 'СЛЕДУЮЩИЙ УРОВЕНЬ',
+                graduated: 'ВЫПУСКНИК!',
+                graduatedMsg: 'Поздравляем! Вы прошли все уровни!',
+                levelProgress: 'Прогресс',
+                currentLevel: 'Текущий уровень',
+                completed: 'пройдено',
+                totalScore: 'Общий счёт',
+                campaign: 'КАМПАНИЯ',
+                freePlay: 'СВОБОДНАЯ ИГРА'
             }
         };
 
@@ -1387,12 +1484,21 @@
             if (!settings.musicEnabled || !audioCtx) return;
             stopMusic();
 
+            // Resume AudioContext if suspended (browser autoplay policy)
             if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+                audioCtx.resume().then(() => {
+                    actuallyStartMusic();
+                });
+            } else {
+                actuallyStartMusic();
             }
+        }
+
+        function actuallyStartMusic() {
+            if (!audioCtx || musicOscillators.length > 0) return;
 
             musicGain = audioCtx.createGain();
-            musicGain.gain.value = 0.08;
+            musicGain.gain.value = 0.25; // Increased from 0.08
             musicGain.connect(audioCtx.destination);
 
             // Create a simple bass line
@@ -1400,7 +1506,7 @@
             let noteIndex = 0;
 
             function playNextNote() {
-                if (!settings.musicEnabled || musicOscillators.length === 0) return;
+                if (!settings.musicEnabled || musicOscillators.length === 0 || !audioCtx) return;
 
                 const osc = audioCtx.createOscillator();
                 const noteGain = audioCtx.createGain();
@@ -1411,7 +1517,7 @@
                 osc.type = 'triangle';
                 osc.frequency.value = bassNotes[noteIndex];
 
-                noteGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                noteGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
                 noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
 
                 osc.start();
@@ -1422,7 +1528,7 @@
 
             // Start the loop
             const musicInterval = setInterval(() => {
-                if (settings.musicEnabled && gameState.running && !gameState.paused) {
+                if (settings.musicEnabled && gameState.running && !gameState.paused && musicOscillators.length > 0) {
                     playNextNote();
                 }
             }, 500);
@@ -1441,8 +1547,8 @@
             padOsc.type = 'sawtooth';
             padOsc.frequency.value = 65.41; // C2
             padFilter.type = 'lowpass';
-            padFilter.frequency.value = 200;
-            padGain.gain.value = 0.15;
+            padFilter.frequency.value = 300; // Increased from 200 for more presence
+            padGain.gain.value = 0.3; // Increased from 0.15
 
             padOsc.start();
             musicOscillators.push({ osc: padOsc, gain: padGain });
