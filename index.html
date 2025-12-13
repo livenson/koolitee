@@ -402,6 +402,9 @@
                     <button class="sound-btn" id="sound-toggle" onclick="toggleSound()">🔊 Sound: ON</button>
                     <button class="sound-btn" id="music-toggle" onclick="toggleMusic()">🎵 Music: ON</button>
                 </div>
+                <div class="setting-row" style="justify-content: center;">
+                    <button class="sound-btn" id="events-toggle" onclick="toggleEvents()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🎲 Random Events: ON</button>
+                </div>
             </div>
 
             <button class="menu-button" id="start-button" style="display: none;">START GAME</button>
@@ -566,9 +569,31 @@
             mapSize: 'medium',
             teacherCount: 4,
             soundEnabled: true,
-            musicEnabled: true,
-            language: 'en'
+            musicEnabled: false,
+            language: 'en',
+            eventsEnabled: true
         };
+
+        // Random Events System
+        const RANDOM_EVENTS = [
+            { id: 'ufo', name: 'ufoAbduction', duration: 6, minInterval: 30, icon: '🛸' },
+            { id: 'dinosaur', name: 'dinosaurStampede', duration: 8, minInterval: 45, icon: '🦖' },
+            { id: 'parents', name: 'parentsVisiting', duration: 15, minInterval: 40, icon: '👨‍👩‍👧' },
+            { id: 'fireDrill', name: 'fireDrill', duration: 12, minInterval: 50, icon: '🚨' },
+            { id: 'principal', name: 'principalInspection', duration: 10, minInterval: 35, icon: '🎩' },
+            { id: 'powerOutage', name: 'powerOutage', duration: 12, minInterval: 40, icon: '💡' },
+            { id: 'foodFight', name: 'foodFight', duration: 8, minInterval: 35, icon: '🍕' },
+            { id: 'superhero', name: 'superheroStudent', duration: 6, minInterval: 45, icon: '🦸' },
+            { id: 'ghost', name: 'ghostJanitor', duration: 10, minInterval: 40, icon: '👻' },
+            { id: 'timeFreeze', name: 'timeFreeze', duration: 5, minInterval: 50, icon: '⏱️' },
+            { id: 'earthquake', name: 'earthquake', duration: 3, minInterval: 60, icon: '🌋' },
+            { id: 'pizza', name: 'pizzaDelivery', duration: 8, minInterval: 35, icon: '🍕' }
+        ];
+
+        let currentEvent = null;
+        let eventTimer = 0;
+        let nextEventTime = 15; // First event after 15 seconds
+        let eventEntities = []; // For UFOs, dinosaurs, etc.
 
         // Level configuration (17 levels total)
         const LEVELS = [
@@ -729,7 +754,24 @@
                 completed: 'completed',
                 totalScore: 'Total Score',
                 campaign: 'CAMPAIGN',
-                freePlay: 'FREE PLAY'
+                freePlay: 'FREE PLAY',
+
+                // Random Events
+                eventsOn: '🎲 Events: ON',
+                eventsOff: '🎲 Events: OFF',
+                eventEnded: 'Event ended',
+                ufoAbduction: 'UFO Abduction',
+                dinosaurStampede: 'Dinosaur Stampede',
+                parentsVisiting: 'Parents Visiting',
+                fireDrill: 'Fire Drill',
+                principalInspection: 'Principal Inspection',
+                powerOutage: 'Power Outage',
+                foodFight: 'Food Fight',
+                superheroStudent: 'Superhero Mode',
+                ghostJanitor: 'Ghost Janitor',
+                timeFreeze: 'Time Freeze',
+                earthquake: 'Earthquake',
+                pizzaDelivery: 'Pizza Delivery'
             },
 
             et: {
@@ -856,7 +898,24 @@
                 completed: 'läbitud',
                 totalScore: 'Koguskoor',
                 campaign: 'KAMPAANIA',
-                freePlay: 'VABAMÄNG'
+                freePlay: 'VABAMÄNG',
+
+                // Random Events
+                eventsOn: '🎲 Sündmused: SEES',
+                eventsOff: '🎲 Sündmused: VÄLJAS',
+                eventEnded: 'Sündmus lõppes',
+                ufoAbduction: 'UFO röövimine',
+                dinosaurStampede: 'Dinosauruste tormakas',
+                parentsVisiting: 'Vanemad külastavad',
+                fireDrill: 'Tuleõppus',
+                principalInspection: 'Direktori kontroll',
+                powerOutage: 'Elektrikatkestus',
+                foodFight: 'Toidulahing',
+                superheroStudent: 'Superkangelase režiim',
+                ghostJanitor: 'Kummituskoristaja',
+                timeFreeze: 'Aja peatumine',
+                earthquake: 'Maavärin',
+                pizzaDelivery: 'Pitsakuller'
             },
 
             lv: {
@@ -983,7 +1042,24 @@
                 completed: 'pabeigts',
                 totalScore: 'Kopējie punkti',
                 campaign: 'KAMPAŅA',
-                freePlay: 'BRĪVĀ SPĒLE'
+                freePlay: 'BRĪVĀ SPĒLE',
+
+                // Random Events
+                eventsOn: '🎲 Notikumi: IESL',
+                eventsOff: '🎲 Notikumi: IZSL',
+                eventEnded: 'Notikums beidzās',
+                ufoAbduction: 'NLO nolaupīšana',
+                dinosaurStampede: 'Dinozauru stampēde',
+                parentsVisiting: 'Vecāku vizīte',
+                fireDrill: 'Ugunsdzēsības mācības',
+                principalInspection: 'Direktora pārbaude',
+                powerOutage: 'Elektrības pārtraukums',
+                foodFight: 'Ēdiena kauja',
+                superheroStudent: 'Supervaroņa režīms',
+                ghostJanitor: 'Spoku sētnieks',
+                timeFreeze: 'Laika apstāšanās',
+                earthquake: 'Zemestrīce',
+                pizzaDelivery: 'Picas piegāde'
             },
 
             lt: {
@@ -1110,7 +1186,24 @@
                 completed: 'baigta',
                 totalScore: 'Bendras rezultatas',
                 campaign: 'KAMPANIJA',
-                freePlay: 'LAISVAS ŽAIDIMAS'
+                freePlay: 'LAISVAS ŽAIDIMAS',
+
+                // Random Events
+                eventsOn: '🎲 Įvykiai: ĮJ',
+                eventsOff: '🎲 Įvykiai: IŠJ',
+                eventEnded: 'Įvykis baigėsi',
+                ufoAbduction: 'NSO pagrobimas',
+                dinosaurStampede: 'Dinozaurų antplūdis',
+                parentsVisiting: 'Tėvų vizitas',
+                fireDrill: 'Gaisrinė treniruotė',
+                principalInspection: 'Direktoriaus patikra',
+                powerOutage: 'Elektros dingimas',
+                foodFight: 'Maisto mūšis',
+                superheroStudent: 'Superherojaus režimas',
+                ghostJanitor: 'Vaiduoklis sargas',
+                timeFreeze: 'Laiko sustabdymas',
+                earthquake: 'Žemės drebėjimas',
+                pizzaDelivery: 'Picos pristatymas'
             },
 
             ru: {
@@ -1206,7 +1299,24 @@
                 completed: 'пройдено',
                 totalScore: 'Общий счёт',
                 campaign: 'КАМПАНИЯ',
-                freePlay: 'СВОБОДНАЯ ИГРА'
+                freePlay: 'СВОБОДНАЯ ИГРА',
+
+                // Random Events
+                eventsOn: '🎲 События: ВКЛ',
+                eventsOff: '🎲 События: ВЫКЛ',
+                eventEnded: 'Событие завершено',
+                ufoAbduction: 'Похищение НЛО',
+                dinosaurStampede: 'Нашествие динозавров',
+                parentsVisiting: 'Визит родителей',
+                fireDrill: 'Пожарная тревога',
+                principalInspection: 'Проверка директора',
+                powerOutage: 'Отключение света',
+                foodFight: 'Битва едой',
+                superheroStudent: 'Режим супергероя',
+                ghostJanitor: 'Призрак уборщика',
+                timeFreeze: 'Остановка времени',
+                earthquake: 'Землетрясение',
+                pizzaDelivery: 'Доставка пиццы'
             }
         };
 
@@ -1584,11 +1694,647 @@
             }
         }
 
+        function toggleEvents() {
+            settings.eventsEnabled = !settings.eventsEnabled;
+            updateSoundButtons();
+            playSound('menu_click');
+        }
+
         function updateSoundButtons() {
             const soundBtn = document.getElementById('sound-toggle');
             const musicBtn = document.getElementById('music-toggle');
+            const eventsBtn = document.getElementById('events-toggle');
             if (soundBtn) soundBtn.textContent = settings.soundEnabled ? t('soundOn') : t('soundOff');
             if (musicBtn) musicBtn.textContent = settings.musicEnabled ? t('musicOn') : t('musicOff');
+            if (eventsBtn) eventsBtn.textContent = settings.eventsEnabled ? t('eventsOn') : t('eventsOff');
+        }
+
+        // ============================================
+        // RANDOM EVENTS SYSTEM
+        // ============================================
+
+        function updateEvents(deltaTime) {
+            if (!settings.eventsEnabled || !gameState.running || gameState.paused) return;
+
+            // Update current event
+            if (currentEvent) {
+                eventTimer -= deltaTime;
+                updateCurrentEvent(deltaTime);
+                if (eventTimer <= 0) {
+                    endCurrentEvent();
+                }
+            } else {
+                // Check if it's time for a new event
+                nextEventTime -= deltaTime;
+                if (nextEventTime <= 0) {
+                    triggerRandomEvent();
+                }
+            }
+
+            // Update event entities
+            updateEventEntities(deltaTime);
+        }
+
+        function triggerRandomEvent() {
+            const event = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
+            currentEvent = { ...event };
+            eventTimer = event.duration;
+            nextEventTime = event.minInterval + Math.random() * 20;
+
+            // Show event announcement
+            showMessage(`${event.icon} ${t(event.name)}!`);
+            playSound('powerup');
+
+            // Initialize event-specific state
+            initEventState(event.id);
+        }
+
+        function initEventState(eventId) {
+            eventEntities = [];
+
+            switch (eventId) {
+                case 'ufo':
+                    // Create UFO that moves across the map
+                    eventEntities.push({
+                        type: 'ufo',
+                        x: -100,
+                        y: Math.random() * gameState.mapHeight * TILE_SIZE,
+                        targetY: Math.random() * gameState.mapHeight * TILE_SIZE,
+                        speed: 150,
+                        beamActive: false,
+                        beamTimer: 0
+                    });
+                    break;
+
+                case 'dinosaur':
+                    // Create dinosaurs running through
+                    const numDinos = 3 + Math.floor(Math.random() * 3);
+                    for (let i = 0; i < numDinos; i++) {
+                        eventEntities.push({
+                            type: 'dinosaur',
+                            x: -50 - i * 80,
+                            y: (Math.random() * 0.6 + 0.2) * gameState.mapHeight * TILE_SIZE,
+                            speed: 200 + Math.random() * 100,
+                            variant: Math.random() < 0.3 ? 'trex' : 'raptor'
+                        });
+                    }
+                    break;
+
+                case 'parents':
+                    // Spawn parent figures around the map
+                    for (let i = 0; i < 4; i++) {
+                        const pos = getRandomFloorPosition();
+                        eventEntities.push({
+                            type: 'parent',
+                            x: pos.x,
+                            y: pos.y,
+                            wanderAngle: Math.random() * Math.PI * 2
+                        });
+                    }
+                    break;
+
+                case 'fireDrill':
+                    // Find exit position for all characters to move toward
+                    gameState.fireDrillActive = true;
+                    break;
+
+                case 'principal':
+                    // Spawn principal
+                    const principalPos = getRandomFloorPosition();
+                    eventEntities.push({
+                        type: 'principal',
+                        x: principalPos.x,
+                        y: principalPos.y,
+                        patrolAngle: 0
+                    });
+                    // Freeze all teachers
+                    teachers.forEach(t => t.frozen = true);
+                    break;
+
+                case 'powerOutage':
+                    gameState.powerOutage = true;
+                    break;
+
+                case 'foodFight':
+                    // Spawn flying food projectiles periodically
+                    gameState.foodFightActive = true;
+                    break;
+
+                case 'superhero':
+                    // Give player temporary powers
+                    player.superhero = true;
+                    player.canFly = true;
+                    break;
+
+                case 'ghost':
+                    // Spawn ghost janitor
+                    const ghostPos = getRandomFloorPosition();
+                    eventEntities.push({
+                        type: 'ghost',
+                        x: ghostPos.x,
+                        y: ghostPos.y,
+                        targetX: ghostPos.x,
+                        targetY: ghostPos.y,
+                        alpha: 0.7
+                    });
+                    break;
+
+                case 'timeFreeze':
+                    gameState.timeFreeze = true;
+                    teachers.forEach(t => t.frozen = true);
+                    break;
+
+                case 'earthquake':
+                    gameState.earthquakeActive = true;
+                    gameState.screenShake = 10;
+                    // Create some new openings in walls
+                    createEarthquakeCracks();
+                    break;
+
+                case 'pizza':
+                    // Spawn pizza delivery person at entrance
+                    eventEntities.push({
+                        type: 'pizza',
+                        x: 2 * TILE_SIZE,
+                        y: gameState.mapHeight / 2 * TILE_SIZE
+                    });
+                    // Teachers rush to entrance
+                    teachers.forEach(t => {
+                        t.rushingToPizza = true;
+                        t.pizzaTarget = { x: 3 * TILE_SIZE, y: gameState.mapHeight / 2 * TILE_SIZE };
+                    });
+                    break;
+            }
+        }
+
+        function updateCurrentEvent(deltaTime) {
+            if (!currentEvent) return;
+
+            switch (currentEvent.id) {
+                case 'foodFight':
+                    // Spawn food projectiles randomly
+                    if (Math.random() < 0.1) {
+                        const pos = getRandomFloorPosition();
+                        eventEntities.push({
+                            type: 'food',
+                            x: pos.x,
+                            y: pos.y - 200,
+                            vy: 300,
+                            foodType: ['🍕', '🍔', '🌭', '🥪', '🍩'][Math.floor(Math.random() * 5)]
+                        });
+                    }
+                    break;
+
+                case 'earthquake':
+                    if (Math.random() < 0.3) {
+                        gameState.screenShake = Math.max(gameState.screenShake, 5);
+                    }
+                    break;
+            }
+        }
+
+        function updateEventEntities(deltaTime) {
+            const toRemove = [];
+
+            eventEntities.forEach((entity, index) => {
+                switch (entity.type) {
+                    case 'ufo':
+                        // Move UFO across screen
+                        entity.x += entity.speed * deltaTime;
+                        entity.y += (entity.targetY - entity.y) * 0.02;
+
+                        // Beam logic
+                        entity.beamTimer -= deltaTime;
+                        if (entity.beamTimer <= 0) {
+                            entity.beamActive = !entity.beamActive;
+                            entity.beamTimer = entity.beamActive ? 1.5 : 0.5;
+                        }
+
+                        // Check beam collision with teachers
+                        if (entity.beamActive) {
+                            teachers.forEach(teacher => {
+                                const dx = teacher.x - entity.x;
+                                const dy = teacher.y - entity.y;
+                                if (Math.abs(dx) < 60 && dy > 0 && dy < 200) {
+                                    teacher.stunned = true;
+                                    teacher.stunnedTimer = 2;
+                                    teacher.y -= 50 * deltaTime; // Lift up
+                                }
+                            });
+                            // Slow player if in beam
+                            const pdx = player.x - entity.x;
+                            const pdy = player.y - entity.y;
+                            if (Math.abs(pdx) < 60 && pdy > 0 && pdy < 200) {
+                                player.vx *= 0.5;
+                                player.vy *= 0.5;
+                            }
+                        }
+
+                        if (entity.x > gameState.mapWidth * TILE_SIZE + 100) {
+                            toRemove.push(index);
+                        }
+                        break;
+
+                    case 'dinosaur':
+                        entity.x += entity.speed * deltaTime;
+
+                        // Knock down anyone in path
+                        const checkKnockdown = (targetX, targetY, isPlayer) => {
+                            const dx = targetX - entity.x;
+                            const dy = targetY - entity.y;
+                            if (Math.abs(dx) < 40 && Math.abs(dy) < 30) {
+                                if (isPlayer && !player.invincible) {
+                                    gameState.screenShake = 8;
+                                    player.vx = 200;
+                                    player.vy = (Math.random() - 0.5) * 200;
+                                } else if (!isPlayer) {
+                                    return true; // Stun teacher
+                                }
+                            }
+                            return false;
+                        };
+
+                        teachers.forEach(teacher => {
+                            if (checkKnockdown(teacher.x, teacher.y, false)) {
+                                teacher.stunned = true;
+                                teacher.stunnedTimer = 3;
+                            }
+                        });
+                        checkKnockdown(player.x, player.y, true);
+
+                        if (entity.x > gameState.mapWidth * TILE_SIZE + 100) {
+                            toRemove.push(index);
+                        }
+                        break;
+
+                    case 'parent':
+                        // Wander around slowly
+                        entity.wanderAngle += (Math.random() - 0.5) * 0.1;
+                        const parentSpeed = 30;
+                        const newPX = entity.x + Math.cos(entity.wanderAngle) * parentSpeed * deltaTime;
+                        const newPY = entity.y + Math.sin(entity.wanderAngle) * parentSpeed * deltaTime;
+                        if (!checkWallCollision(newPX, newPY, 20)) {
+                            entity.x = newPX;
+                            entity.y = newPY;
+                        } else {
+                            entity.wanderAngle += Math.PI;
+                        }
+
+                        // Distract nearby teachers (slow them down)
+                        teachers.forEach(teacher => {
+                            const dx = teacher.x - entity.x;
+                            const dy = teacher.y - entity.y;
+                            if (Math.sqrt(dx*dx + dy*dy) < 150) {
+                                teacher.distracted = true;
+                            }
+                        });
+                        break;
+
+                    case 'principal':
+                        // Patrol in a circle
+                        entity.patrolAngle += deltaTime * 0.5;
+                        const radius = 100;
+                        const targetX = entity.x + Math.cos(entity.patrolAngle) * radius;
+                        const targetY = entity.y + Math.sin(entity.patrolAngle) * radius;
+                        entity.displayX = targetX;
+                        entity.displayY = targetY;
+                        break;
+
+                    case 'ghost':
+                        // Float toward wet floors and clean them
+                        if (Math.random() < 0.02) {
+                            // Find new target (wet floor or random)
+                            let foundWetFloor = false;
+                            for (let y = 0; y < gameState.mapHeight && !foundWetFloor; y++) {
+                                for (let x = 0; x < gameState.mapWidth && !foundWetFloor; x++) {
+                                    if (gameState.map[y][x] === TILES.WET_FLOOR) {
+                                        entity.targetX = x * TILE_SIZE + TILE_SIZE/2;
+                                        entity.targetY = y * TILE_SIZE + TILE_SIZE/2;
+                                        foundWetFloor = true;
+                                    }
+                                }
+                            }
+                            if (!foundWetFloor) {
+                                const pos = getRandomFloorPosition();
+                                entity.targetX = pos.x;
+                                entity.targetY = pos.y;
+                            }
+                        }
+
+                        // Move toward target
+                        const gdx = entity.targetX - entity.x;
+                        const gdy = entity.targetY - entity.y;
+                        const gDist = Math.sqrt(gdx*gdx + gdy*gdy);
+                        if (gDist > 5) {
+                            entity.x += (gdx / gDist) * 80 * deltaTime;
+                            entity.y += (gdy / gDist) * 80 * deltaTime;
+                        }
+
+                        // Clean wet floor at current position
+                        const gTileX = Math.floor(entity.x / TILE_SIZE);
+                        const gTileY = Math.floor(entity.y / TILE_SIZE);
+                        if (gameState.map[gTileY] && gameState.map[gTileY][gTileX] === TILES.WET_FLOOR) {
+                            gameState.map[gTileY][gTileX] = TILES.FLOOR;
+                        }
+
+                        // Scare nearby teachers
+                        teachers.forEach(teacher => {
+                            const dx = teacher.x - entity.x;
+                            const dy = teacher.y - entity.y;
+                            if (Math.sqrt(dx*dx + dy*dy) < 100) {
+                                // Run away from ghost
+                                teacher.vx = dx * 2;
+                                teacher.vy = dy * 2;
+                                teacher.scaredTimer = 1;
+                            }
+                        });
+
+                        entity.alpha = 0.5 + Math.sin(Date.now() / 200) * 0.3;
+                        break;
+
+                    case 'food':
+                        entity.y += entity.vy * deltaTime;
+
+                        // Check collision with ground/entities
+                        const foodTileY = Math.floor(entity.y / TILE_SIZE);
+                        if (foodTileY >= 0 && foodTileY < gameState.mapHeight) {
+                            // Hit teachers
+                            teachers.forEach(teacher => {
+                                const dx = teacher.x - entity.x;
+                                const dy = teacher.y - entity.y;
+                                if (Math.sqrt(dx*dx + dy*dy) < 30) {
+                                    teacher.stunned = true;
+                                    teacher.stunnedTimer = 2;
+                                    toRemove.push(index);
+                                }
+                            });
+
+                            // Hit player
+                            const pdx = player.x - entity.x;
+                            const pdy = player.y - entity.y;
+                            if (Math.sqrt(pdx*pdx + pdy*pdy) < 25 && !player.invincible) {
+                                player.vx += (Math.random() - 0.5) * 100;
+                                player.vy += (Math.random() - 0.5) * 100;
+                                toRemove.push(index);
+                            }
+
+                            // Hit ground
+                            if (entity.y > foodTileY * TILE_SIZE + TILE_SIZE) {
+                                // Create slippery spot
+                                const tileX = Math.floor(entity.x / TILE_SIZE);
+                                if (gameState.map[foodTileY] && gameState.map[foodTileY][tileX] === TILES.FLOOR) {
+                                    gameState.map[foodTileY][tileX] = TILES.WET_FLOOR;
+                                }
+                                toRemove.push(index);
+                            }
+                        }
+                        break;
+
+                    case 'pizza':
+                        // Just stands there, teachers come to it
+                        entity.timer = (entity.timer || 0) + deltaTime;
+                        break;
+                }
+            });
+
+            // Remove entities marked for removal (in reverse order)
+            toRemove.sort((a, b) => b - a).forEach(idx => eventEntities.splice(idx, 1));
+        }
+
+        function endCurrentEvent() {
+            if (!currentEvent) return;
+
+            // Clean up event-specific state
+            switch (currentEvent.id) {
+                case 'principal':
+                case 'timeFreeze':
+                    teachers.forEach(t => t.frozen = false);
+                    break;
+
+                case 'powerOutage':
+                    gameState.powerOutage = false;
+                    break;
+
+                case 'fireDrill':
+                    gameState.fireDrillActive = false;
+                    break;
+
+                case 'foodFight':
+                    gameState.foodFightActive = false;
+                    break;
+
+                case 'superhero':
+                    player.superhero = false;
+                    player.canFly = false;
+                    break;
+
+                case 'earthquake':
+                    gameState.earthquakeActive = false;
+                    break;
+
+                case 'pizza':
+                    teachers.forEach(t => {
+                        t.rushingToPizza = false;
+                        t.pizzaTarget = null;
+                    });
+                    break;
+
+                case 'parents':
+                    teachers.forEach(t => t.distracted = false);
+                    break;
+            }
+
+            eventEntities = [];
+            currentEvent = null;
+            showMessage(t('eventEnded'));
+        }
+
+        function createEarthquakeCracks() {
+            // Create 3-5 new openings in walls
+            const numCracks = 3 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < numCracks; i++) {
+                const x = Math.floor(Math.random() * (gameState.mapWidth - 2)) + 1;
+                const y = Math.floor(Math.random() * (gameState.mapHeight - 2)) + 1;
+                if (gameState.map[y][x] === TILES.WALL) {
+                    // Check if it connects two floor tiles
+                    const hasFloorNeighbor =
+                        (gameState.map[y-1] && gameState.map[y-1][x] === TILES.FLOOR) ||
+                        (gameState.map[y+1] && gameState.map[y+1][x] === TILES.FLOOR) ||
+                        (gameState.map[y][x-1] === TILES.FLOOR) ||
+                        (gameState.map[y][x+1] === TILES.FLOOR);
+                    if (hasFloorNeighbor) {
+                        gameState.map[y][x] = TILES.FLOOR;
+                        spawnParticle(x * TILE_SIZE + TILE_SIZE/2, y * TILE_SIZE + TILE_SIZE/2, 'hit');
+                    }
+                }
+            }
+        }
+
+        function getRandomFloorPosition() {
+            let attempts = 0;
+            while (attempts < 100) {
+                const x = Math.floor(Math.random() * gameState.mapWidth);
+                const y = Math.floor(Math.random() * gameState.mapHeight);
+                if (gameState.map[y] && gameState.map[y][x] === TILES.FLOOR) {
+                    return { x: x * TILE_SIZE + TILE_SIZE/2, y: y * TILE_SIZE + TILE_SIZE/2 };
+                }
+                attempts++;
+            }
+            return { x: player.x, y: player.y };
+        }
+
+        function drawEventEntities(ctx) {
+            eventEntities.forEach(entity => {
+                const screenX = entity.x - gameState.camera.x;
+                const screenY = entity.y - gameState.camera.y;
+
+                switch (entity.type) {
+                    case 'ufo':
+                        // Draw UFO
+                        ctx.save();
+                        ctx.translate(screenX, screenY);
+
+                        // UFO body
+                        ctx.fillStyle = '#888';
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, 40, 15, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#4af';
+                        ctx.beginPath();
+                        ctx.ellipse(0, -8, 20, 12, 0, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Beam
+                        if (entity.beamActive) {
+                            ctx.fillStyle = 'rgba(100, 255, 100, 0.3)';
+                            ctx.beginPath();
+                            ctx.moveTo(-30, 15);
+                            ctx.lineTo(30, 15);
+                            ctx.lineTo(60, 200);
+                            ctx.lineTo(-60, 200);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                        ctx.restore();
+                        break;
+
+                    case 'dinosaur':
+                        ctx.save();
+                        ctx.translate(screenX, screenY);
+                        ctx.font = entity.variant === 'trex' ? '48px Arial' : '36px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(entity.variant === 'trex' ? '🦖' : '🦕', 0, 0);
+                        ctx.restore();
+                        break;
+
+                    case 'parent':
+                        ctx.save();
+                        ctx.translate(screenX, screenY);
+                        ctx.font = '32px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('👨‍👩‍👧', 0, 0);
+                        ctx.restore();
+                        break;
+
+                    case 'principal':
+                        const dispX = (entity.displayX || entity.x) - gameState.camera.x;
+                        const dispY = (entity.displayY || entity.y) - gameState.camera.y;
+                        ctx.save();
+                        ctx.translate(dispX, dispY);
+                        ctx.font = '36px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🎩', 0, -15);
+                        ctx.fillText('👔', 0, 10);
+                        ctx.restore();
+                        break;
+
+                    case 'ghost':
+                        ctx.save();
+                        ctx.globalAlpha = entity.alpha || 0.7;
+                        ctx.translate(screenX, screenY);
+                        ctx.font = '40px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('👻', 0, 0);
+                        ctx.restore();
+                        break;
+
+                    case 'food':
+                        ctx.save();
+                        ctx.translate(screenX, screenY);
+                        ctx.font = '24px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(entity.foodType, 0, 0);
+                        ctx.restore();
+                        break;
+
+                    case 'pizza':
+                        ctx.save();
+                        ctx.translate(screenX, screenY);
+                        ctx.font = '36px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🛵', 0, -10);
+                        ctx.fillText('🍕', 15, 5);
+                        ctx.restore();
+                        break;
+                }
+            });
+
+            // Draw power outage effect
+            if (gameState.powerOutage) {
+                ctx.save();
+                // Dark overlay with flashlight effect around player
+                const playerScreenX = player.x - gameState.camera.x;
+                const playerScreenY = player.y - gameState.camera.y;
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Flashlight circle
+                ctx.globalCompositeOperation = 'destination-out';
+                const gradient = ctx.createRadialGradient(playerScreenX, playerScreenY, 0, playerScreenX, playerScreenY, 120);
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.8)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(playerScreenX, playerScreenY, 120, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw time freeze effect
+            if (gameState.timeFreeze) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(100, 150, 255, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // Draw fire drill effect (flashing red)
+            if (gameState.fireDrillActive && Math.floor(Date.now() / 200) % 2 === 0) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // Draw current event indicator
+            if (currentEvent) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(canvas.width / 2 - 80, 10, 160, 30);
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${currentEvent.icon} ${Math.ceil(eventTimer)}s`, canvas.width / 2, 30);
+                ctx.restore();
+            }
         }
 
         // ============================================
@@ -1957,6 +2703,9 @@
             // Update timers
             updateTimers(deltaTime);
 
+            // Update random events
+            updateEvents(deltaTime);
+
             // Update player
             updatePlayer(deltaTime);
 
@@ -2045,6 +2794,7 @@
             let currentSpeed = player.speed;
             if (player.isDashing) currentSpeed *= 2.5;
             if (player.speedBoost) currentSpeed *= 1.5;
+            if (player.superhero) currentSpeed *= 2.0; // Superhero speed boost
 
             // Check for wet floor
             const tileX = Math.floor(player.x / TILE_SIZE);
@@ -2064,11 +2814,18 @@
             const newX = player.x + player.vx;
             const newY = player.y + player.vy;
 
-            if (!checkWallCollision(newX, player.y, PLAYER_SIZE)) {
-                player.x = newX;
-            }
-            if (!checkWallCollision(player.x, newY, PLAYER_SIZE)) {
-                player.y = newY;
+            // Superhero can fly through walls
+            if (player.canFly) {
+                // Just keep within map bounds
+                player.x = Math.max(PLAYER_SIZE, Math.min(newX, gameState.mapWidth * TILE_SIZE - PLAYER_SIZE));
+                player.y = Math.max(PLAYER_SIZE, Math.min(newY, gameState.mapHeight * TILE_SIZE - PLAYER_SIZE));
+            } else {
+                if (!checkWallCollision(newX, player.y, PLAYER_SIZE)) {
+                    player.x = newX;
+                }
+                if (!checkWallCollision(player.x, newY, PLAYER_SIZE)) {
+                    player.y = newY;
+                }
             }
 
             // Update direction
@@ -2090,6 +2847,13 @@
 
         function updateTeachers(deltaTime) {
             for (const teacher of teachers) {
+                // Handle frozen state (from events)
+                if (teacher.frozen) {
+                    teacher.vx = 0;
+                    teacher.vy = 0;
+                    continue;
+                }
+
                 if (teacher.stunned) {
                     teacher.stunnedTimer -= deltaTime;
                     if (teacher.stunnedTimer <= 0) {
@@ -2098,13 +2862,48 @@
                     continue;
                 }
 
-                // Check if teacher sees player
+                // Handle scared state (from ghost)
+                if (teacher.scaredTimer > 0) {
+                    teacher.scaredTimer -= deltaTime;
+                    // Just run in current direction
+                    const newX = teacher.x + teacher.vx * deltaTime * 60;
+                    const newY = teacher.y + teacher.vy * deltaTime * 60;
+                    if (!checkWallCollision(newX, teacher.y, TEACHER_SIZE)) teacher.x = newX;
+                    if (!checkWallCollision(teacher.x, newY, TEACHER_SIZE)) teacher.y = newY;
+                    continue;
+                }
+
+                // Handle pizza delivery event - rush to pizza
+                if (teacher.rushingToPizza && teacher.pizzaTarget) {
+                    const pdx = teacher.pizzaTarget.x - teacher.x;
+                    const pdy = teacher.pizzaTarget.y - teacher.y;
+                    const pDist = Math.sqrt(pdx * pdx + pdy * pdy);
+                    if (pDist > 20) {
+                        teacher.vx = (pdx / pDist) * teacher.speed * 1.5;
+                        teacher.vy = (pdy / pDist) * teacher.speed * 1.5;
+                    } else {
+                        teacher.vx = 0;
+                        teacher.vy = 0;
+                    }
+                    const newX = teacher.x + teacher.vx;
+                    const newY = teacher.y + teacher.vy;
+                    if (!checkWallCollision(newX, teacher.y, TEACHER_SIZE)) teacher.x = newX;
+                    if (!checkWallCollision(teacher.x, newY, TEACHER_SIZE)) teacher.y = newY;
+                    continue;
+                }
+
+                // Speed modifier from distraction (parents visiting)
+                const speedMod = teacher.distracted ? 0.5 : 1.0;
+
+                // Check if teacher sees player (not during power outage)
                 const dx = player.x - teacher.x;
                 const dy = player.y - teacher.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 const sightRange = teacher.type === 'hunter' ? 200 : 150;
 
-                const nowSeesPlayer = dist < sightRange && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
+                // Teachers can't see well during power outage
+                const effectiveSightRange = gameState.powerOutage ? sightRange * 0.3 : sightRange;
+                const nowSeesPlayer = dist < effectiveSightRange && hasLineOfSight(teacher.x, teacher.y, player.x, player.y);
 
                 // Play alert sound when teacher first spots player
                 if (nowSeesPlayer && !teacher.seesPlayer) {
@@ -2117,14 +2916,16 @@
                     // Chase player
                     teacher.chaseTimer = 3;
                     const angle = Math.atan2(dy, dx);
-                    teacher.vx = Math.cos(angle) * teacher.speed * 1.3;
-                    teacher.vy = Math.sin(angle) * teacher.speed * 1.3;
+                    teacher.vx = Math.cos(angle) * teacher.speed * 1.3 * speedMod;
+                    teacher.vy = Math.sin(angle) * teacher.speed * 1.3 * speedMod;
                 } else if (teacher.chaseTimer > 0) {
                     teacher.chaseTimer -= deltaTime;
                     // Continue moving toward last known position
                 } else {
                     // Patrol behavior
                     updatePatrol(teacher, deltaTime);
+                    teacher.vx *= speedMod;
+                    teacher.vy *= speedMod;
                 }
 
                 // Apply movement with collision
@@ -2529,7 +3330,12 @@
             // Draw particles
             drawParticles();
 
+            // Draw event entities (in world space)
+            drawEventEntities(ctx);
+
             ctx.restore();
+
+            // Draw event effects (in screen space - done inside drawEventEntities)
 
             // Draw minimap
             drawMinimap();
@@ -3218,8 +4024,16 @@
                 speedBoost: false,
                 speedBoostTimer: 0,
                 direction: 0,
-                animFrame: 0
+                animFrame: 0,
+                superhero: false,
+                canFly: false
             };
+
+            // Reset events
+            currentEvent = null;
+            eventTimer = 0;
+            nextEventTime = 15;
+            eventEntities = [];
 
             // Generate map
             generateMap();
