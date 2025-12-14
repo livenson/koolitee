@@ -428,37 +428,12 @@
                     <input type="range" id="teacher-count" min="2" max="8" value="4">
                     <span id="teacher-count-display">4</span>
                 </div>
-                <div class="setting-row">
-                    <label data-translate="mapTopology">Map Layout:</label>
-                    <select id="map-topology">
-                        <option value="grid" data-translate="topologyGrid">Grid (Classic)</option>
-                        <option value="labyrinth" data-translate="topologyLabyrinth">Labyrinth (Maze)</option>
-                        <option value="corridors" data-translate="topologyCorridors">Many Corridors</option>
-                        <option value="openPlan" data-translate="topologyOpenPlan">Open Plan</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label data-translate="corridorDensity">Corridor Density:</label>
-                    <select id="corridor-density">
-                        <option value="low" data-translate="densityLow">Low</option>
-                        <option value="medium" selected data-translate="densityMedium">Medium</option>
-                        <option value="high" data-translate="densityHigh">High</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label data-translate="roomDensity">Room Density:</label>
-                    <select id="room-density">
-                        <option value="few" data-translate="roomsFew">Few Rooms</option>
-                        <option value="normal" selected data-translate="roomsNormal">Normal</option>
-                        <option value="many" data-translate="roomsMany">Many Rooms</option>
-                    </select>
-                </div>
             </div>
 
             <!-- Common Settings (Collapsible) -->
             <div class="settings-panel" style="padding: 10px;">
                 <div class="collapsible-header" id="settings-toggle" onclick="toggleSettingsPanel()">
-                    <span class="header-title">⚙️ Settings (Language, Sound, Events)</span>
+                    <span class="header-title">⚙️ Settings</span>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div class="collapsible-content" id="settings-content">
@@ -478,6 +453,31 @@
                     </div>
                     <div class="setting-row" style="justify-content: center;">
                         <button class="sound-btn" id="events-toggle" onclick="toggleEvents()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🎲 Random Events: ON</button>
+                    </div>
+                    <div class="setting-row">
+                        <label data-translate="mapTopology">Map Layout:</label>
+                        <select id="map-topology">
+                            <option value="grid" data-translate="topologyGrid">Grid (Classic)</option>
+                            <option value="labyrinth" data-translate="topologyLabyrinth">Labyrinth (Maze)</option>
+                            <option value="corridors" data-translate="topologyCorridors">Many Corridors</option>
+                            <option value="openPlan" data-translate="topologyOpenPlan">Open Plan</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label data-translate="corridorDensity">Corridor Density:</label>
+                        <select id="corridor-density">
+                            <option value="low" data-translate="densityLow">Low</option>
+                            <option value="medium" selected data-translate="densityMedium">Medium</option>
+                            <option value="high" data-translate="densityHigh">High</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label data-translate="roomDensity">Room Density:</label>
+                        <select id="room-density">
+                            <option value="few" data-translate="roomsFew">Few Rooms</option>
+                            <option value="normal" selected data-translate="roomsNormal">Normal</option>
+                            <option value="many" data-translate="roomsMany">Many Rooms</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -2582,10 +2582,10 @@
                 speedMultiplier = 1.0;
             }
 
-            // Get map generation settings (only used in freeplay mode)
-            const topology = gameMode === 'freeplay' ? settings.mapTopology : 'grid';
-            const corridorDensity = gameMode === 'freeplay' ? settings.corridorDensity : 'medium';
-            const roomDensity = gameMode === 'freeplay' ? settings.roomDensity : 'normal';
+            // Get map generation settings (applies to both modes)
+            const topology = settings.mapTopology;
+            const corridorDensity = settings.corridorDensity;
+            const roomDensity = settings.roomDensity;
 
             gameState.mapWidth = size.width;
             gameState.mapHeight = size.height;
