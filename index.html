@@ -454,6 +454,16 @@
                     <div class="setting-row" style="justify-content: center;">
                         <button class="sound-btn" id="events-toggle" onclick="toggleEvents()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🎲 Random Events: ON</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Map Configuration (Collapsible) -->
+            <div class="settings-panel" style="padding: 10px;">
+                <div class="collapsible-header" id="map-config-toggle" onclick="toggleMapConfigPanel()">
+                    <span class="header-title" data-translate="mapConfigTitle">🗺️ Map Configuration</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="collapsible-content" id="map-config-content">
                     <div class="setting-row">
                         <label data-translate="mapTopology">Map Layout:</label>
                         <select id="map-topology">
@@ -870,6 +880,7 @@
                 pizzaDelivery: 'Pizza Delivery',
 
                 // Map Generation Settings
+                mapConfigTitle: 'Map Configuration',
                 mapTopology: 'Map Layout:',
                 topologyGrid: 'Grid (Classic)',
                 topologyLabyrinth: 'Labyrinth (Maze)',
@@ -1036,6 +1047,7 @@
                 pizzaDelivery: 'Pitsakuller',
 
                 // Map Generation Settings
+                mapConfigTitle: 'Kaardi seadistus',
                 mapTopology: 'Kaardi paigutus:',
                 topologyGrid: 'Ruudustik (Klassikaline)',
                 topologyLabyrinth: 'Labürint (Eksitav)',
@@ -1202,6 +1214,7 @@
                 pizzaDelivery: 'Picas piegāde',
 
                 // Map Generation Settings
+                mapConfigTitle: 'Kartes konfigurācija',
                 mapTopology: 'Kartes izkārtojums:',
                 topologyGrid: 'Režģis (Klasiskais)',
                 topologyLabyrinth: 'Labirints (Maldīgs)',
@@ -1368,6 +1381,7 @@
                 pizzaDelivery: 'Picos pristatymas',
 
                 // Map Generation Settings
+                mapConfigTitle: 'Žemėlapio konfigūracija',
                 mapTopology: 'Žemėlapio išdėstymas:',
                 topologyGrid: 'Tinklelis (Klasikinis)',
                 topologyLabyrinth: 'Labirintas (Klaidinantis)',
@@ -1503,6 +1517,7 @@
                 pizzaDelivery: 'Доставка пиццы',
 
                 // Map Generation Settings
+                mapConfigTitle: 'Настройка карты',
                 mapTopology: 'Планировка карты:',
                 topologyGrid: 'Сетка (Классика)',
                 topologyLabyrinth: 'Лабиринт (Запутанный)',
@@ -1902,6 +1917,16 @@
         function toggleSettingsPanel() {
             const header = document.getElementById('settings-toggle');
             const content = document.getElementById('settings-content');
+            if (header && content) {
+                header.classList.toggle('expanded');
+                content.classList.toggle('expanded');
+                playSound('menu_click');
+            }
+        }
+
+        function toggleMapConfigPanel() {
+            const header = document.getElementById('map-config-toggle');
+            const content = document.getElementById('map-config-content');
             if (header && content) {
                 header.classList.toggle('expanded');
                 content.classList.toggle('expanded');
