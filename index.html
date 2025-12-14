@@ -404,36 +404,42 @@
                 <div style="color: #aaa; margin-top: 5px;" id="menu-progress-text">0/17 completed</div>
             </div>
 
-            <!-- Free Play Settings -->
-            <div id="freeplay-settings" class="settings-panel" style="display: none;">
-                <div class="setting-row">
-                    <label>School Type:</label>
-                    <select id="school-type">
-                        <option value="elementary">Elementary (Easy)</option>
-                        <option value="middle" selected>Middle School (Medium)</option>
-                        <option value="high">High School (Hard)</option>
-                        <option value="university">University (Expert)</option>
-                    </select>
+            <!-- Free Play Settings (Collapsible) -->
+            <div id="freeplay-settings" class="settings-panel" style="display: none; padding: 10px;">
+                <div class="collapsible-header expanded" id="freeplay-toggle" onclick="toggleFreeplayPanel()">
+                    <span class="header-title" data-translate="freeplaySettings">🎮 Free Play Settings</span>
+                    <span class="toggle-icon">▼</span>
                 </div>
-                <div class="setting-row">
-                    <label>Map Size:</label>
-                    <select id="map-size">
-                        <option value="small">Small</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="large">Large</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label>Teachers:</label>
-                    <input type="range" id="teacher-count" min="2" max="8" value="4">
-                    <span id="teacher-count-display">4</span>
+                <div class="collapsible-content expanded" id="freeplay-content">
+                    <div class="setting-row">
+                        <label>School Type:</label>
+                        <select id="school-type">
+                            <option value="elementary">Elementary (Easy)</option>
+                            <option value="middle" selected>Middle School (Medium)</option>
+                            <option value="high">High School (Hard)</option>
+                            <option value="university">University (Expert)</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label>Map Size:</label>
+                        <select id="map-size">
+                            <option value="small">Small</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label>Teachers:</label>
+                        <input type="range" id="teacher-count" min="2" max="8" value="4">
+                        <span id="teacher-count-display">4</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Common Settings (Collapsible) -->
             <div class="settings-panel" style="padding: 10px;">
                 <div class="collapsible-header" id="settings-toggle" onclick="toggleSettingsPanel()">
-                    <span class="header-title">⚙️ Settings (Language, Sound, Events)</span>
+                    <span class="header-title">⚙️ Settings</span>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div class="collapsible-content" id="settings-content">
@@ -453,6 +459,41 @@
                     </div>
                     <div class="setting-row" style="justify-content: center;">
                         <button class="sound-btn" id="events-toggle" onclick="toggleEvents()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🎲 Random Events: ON</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Configuration (Collapsible) -->
+            <div class="settings-panel" style="padding: 10px;">
+                <div class="collapsible-header" id="map-config-toggle" onclick="toggleMapConfigPanel()">
+                    <span class="header-title" data-translate="mapConfigTitle">🗺️ Map Configuration</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="collapsible-content" id="map-config-content">
+                    <div class="setting-row">
+                        <label data-translate="mapTopology">Map Layout:</label>
+                        <select id="map-topology">
+                            <option value="grid" data-translate="topologyGrid">Grid (Classic)</option>
+                            <option value="labyrinth" data-translate="topologyLabyrinth">Labyrinth (Maze)</option>
+                            <option value="corridors" data-translate="topologyCorridors">Many Corridors</option>
+                            <option value="openPlan" data-translate="topologyOpenPlan">Open Plan</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label data-translate="corridorDensity">Corridor Density:</label>
+                        <select id="corridor-density">
+                            <option value="low" data-translate="densityLow">Low</option>
+                            <option value="medium" selected data-translate="densityMedium">Medium</option>
+                            <option value="high" data-translate="densityHigh">High</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label data-translate="roomDensity">Room Density:</label>
+                        <select id="room-density">
+                            <option value="few" data-translate="roomsFew">Few Rooms</option>
+                            <option value="normal" selected data-translate="roomsNormal">Normal</option>
+                            <option value="many" data-translate="roomsMany">Many Rooms</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -631,7 +672,11 @@
             soundEnabled: true,
             musicEnabled: false,
             language: 'en',
-            eventsEnabled: true
+            eventsEnabled: true,
+            // Map generation settings
+            mapTopology: 'grid',           // grid, labyrinth, corridors, openPlan
+            corridorDensity: 'medium',     // low, medium, high
+            roomDensity: 'normal'          // few, normal, many
         };
 
         // Random Events System
@@ -787,6 +832,7 @@
 
                 // Game modes
                 freePlay: 'FREE PLAY',
+                freeplaySettings: 'Free Play Settings',
                 campaign: 'CAMPAIGN',
                 selectMode: 'Select Mode',
                 continueGame: 'CONTINUE',
@@ -838,7 +884,23 @@
                 ghostJanitor: 'Ghost Janitor',
                 timeFreeze: 'Time Freeze',
                 earthquake: 'Earthquake',
-                pizzaDelivery: 'Pizza Delivery'
+                pizzaDelivery: 'Pizza Delivery',
+
+                // Map Generation Settings
+                mapConfigTitle: 'Map Configuration',
+                mapTopology: 'Map Layout:',
+                topologyGrid: 'Grid (Classic)',
+                topologyLabyrinth: 'Labyrinth (Maze)',
+                topologyCorridors: 'Many Corridors',
+                topologyOpenPlan: 'Open Plan',
+                corridorDensity: 'Corridor Density:',
+                densityLow: 'Low',
+                densityMedium: 'Medium',
+                densityHigh: 'High',
+                roomDensity: 'Room Density:',
+                roomsFew: 'Few Rooms',
+                roomsNormal: 'Normal',
+                roomsMany: 'Many Rooms'
             },
 
             et: {
@@ -938,6 +1000,7 @@
 
                 // Game modes
                 freePlay: 'VABAMÄNG',
+                freeplaySettings: 'Vabamängu seaded',
                 campaign: 'KAMPAANIA',
                 selectMode: 'Vali režiim',
                 continueGame: 'JÄTKA',
@@ -989,7 +1052,23 @@
                 ghostJanitor: 'Kummituskoristaja',
                 timeFreeze: 'Aja peatumine',
                 earthquake: 'Maavärin',
-                pizzaDelivery: 'Pitsakuller'
+                pizzaDelivery: 'Pitsakuller',
+
+                // Map Generation Settings
+                mapConfigTitle: 'Kaardi seadistus',
+                mapTopology: 'Kaardi paigutus:',
+                topologyGrid: 'Ruudustik (Klassikaline)',
+                topologyLabyrinth: 'Labürint (Eksitav)',
+                topologyCorridors: 'Palju koridore',
+                topologyOpenPlan: 'Avatud plaan',
+                corridorDensity: 'Koridoride tihedus:',
+                densityLow: 'Madal',
+                densityMedium: 'Keskmine',
+                densityHigh: 'Kõrge',
+                roomDensity: 'Tubade tihedus:',
+                roomsFew: 'Vähe tube',
+                roomsNormal: 'Tavaline',
+                roomsMany: 'Palju tube'
             },
 
             lv: {
@@ -1089,6 +1168,7 @@
 
                 // Game modes
                 freePlay: 'BRĪVĀ SPĒLE',
+                freeplaySettings: 'Brīvās spēles iestatījumi',
                 campaign: 'KAMPAŅA',
                 selectMode: 'Izvēlies režīmu',
                 continueGame: 'TURPINĀT',
@@ -1140,7 +1220,23 @@
                 ghostJanitor: 'Spoku sētnieks',
                 timeFreeze: 'Laika apstāšanās',
                 earthquake: 'Zemestrīce',
-                pizzaDelivery: 'Picas piegāde'
+                pizzaDelivery: 'Picas piegāde',
+
+                // Map Generation Settings
+                mapConfigTitle: 'Kartes konfigurācija',
+                mapTopology: 'Kartes izkārtojums:',
+                topologyGrid: 'Režģis (Klasiskais)',
+                topologyLabyrinth: 'Labirints (Maldīgs)',
+                topologyCorridors: 'Daudz koridoru',
+                topologyOpenPlan: 'Atvērts plāns',
+                corridorDensity: 'Koridoru blīvums:',
+                densityLow: 'Zems',
+                densityMedium: 'Vidējs',
+                densityHigh: 'Augsts',
+                roomDensity: 'Istabu blīvums:',
+                roomsFew: 'Maz istabu',
+                roomsNormal: 'Normāls',
+                roomsMany: 'Daudz istabu'
             },
 
             lt: {
@@ -1240,6 +1336,7 @@
 
                 // Game modes
                 freePlay: 'LAISVAS ŽAIDIMAS',
+                freeplaySettings: 'Laisvo žaidimo nustatymai',
                 campaign: 'KAMPANIJA',
                 selectMode: 'Pasirink režimą',
                 continueGame: 'TĘSTI',
@@ -1291,7 +1388,23 @@
                 ghostJanitor: 'Vaiduoklis sargas',
                 timeFreeze: 'Laiko sustabdymas',
                 earthquake: 'Žemės drebėjimas',
-                pizzaDelivery: 'Picos pristatymas'
+                pizzaDelivery: 'Picos pristatymas',
+
+                // Map Generation Settings
+                mapConfigTitle: 'Žemėlapio konfigūracija',
+                mapTopology: 'Žemėlapio išdėstymas:',
+                topologyGrid: 'Tinklelis (Klasikinis)',
+                topologyLabyrinth: 'Labirintas (Klaidinantis)',
+                topologyCorridors: 'Daug koridorių',
+                topologyOpenPlan: 'Atviras planas',
+                corridorDensity: 'Koridorių tankis:',
+                densityLow: 'Žemas',
+                densityMedium: 'Vidutinis',
+                densityHigh: 'Aukštas',
+                roomDensity: 'Kambarių tankis:',
+                roomsFew: 'Mažai kambarių',
+                roomsNormal: 'Normalus',
+                roomsMany: 'Daug kambarių'
             },
 
             ru: {
@@ -1395,6 +1508,7 @@
                 totalScore: 'Общий счёт',
                 campaign: 'КАМПАНИЯ',
                 freePlay: 'СВОБОДНАЯ ИГРА',
+                freeplaySettings: 'Настройки свободной игры',
 
                 // Random Events
                 eventsOn: '🎲 События: ВКЛ',
@@ -1411,7 +1525,23 @@
                 ghostJanitor: 'Призрак уборщика',
                 timeFreeze: 'Остановка времени',
                 earthquake: 'Землетрясение',
-                pizzaDelivery: 'Доставка пиццы'
+                pizzaDelivery: 'Доставка пиццы',
+
+                // Map Generation Settings
+                mapConfigTitle: 'Настройка карты',
+                mapTopology: 'Планировка карты:',
+                topologyGrid: 'Сетка (Классика)',
+                topologyLabyrinth: 'Лабиринт (Запутанный)',
+                topologyCorridors: 'Много коридоров',
+                topologyOpenPlan: 'Открытая планировка',
+                corridorDensity: 'Плотность коридоров:',
+                densityLow: 'Низкая',
+                densityMedium: 'Средняя',
+                densityHigh: 'Высокая',
+                roomDensity: 'Плотность комнат:',
+                roomsFew: 'Мало комнат',
+                roomsNormal: 'Нормальная',
+                roomsMany: 'Много комнат'
             }
         };
 
@@ -1798,6 +1928,26 @@
         function toggleSettingsPanel() {
             const header = document.getElementById('settings-toggle');
             const content = document.getElementById('settings-content');
+            if (header && content) {
+                header.classList.toggle('expanded');
+                content.classList.toggle('expanded');
+                playSound('menu_click');
+            }
+        }
+
+        function toggleMapConfigPanel() {
+            const header = document.getElementById('map-config-toggle');
+            const content = document.getElementById('map-config-content');
+            if (header && content) {
+                header.classList.toggle('expanded');
+                content.classList.toggle('expanded');
+                playSound('menu_click');
+            }
+        }
+
+        function toggleFreeplayPanel() {
+            const header = document.getElementById('freeplay-toggle');
+            const content = document.getElementById('freeplay-content');
             if (header && content) {
                 header.classList.toggle('expanded');
                 content.classList.toggle('expanded');
@@ -2478,6 +2628,11 @@
                 speedMultiplier = 1.0;
             }
 
+            // Get map generation settings (applies to both modes)
+            const topology = settings.mapTopology;
+            const corridorDensity = settings.corridorDensity;
+            const roomDensity = settings.roomDensity;
+
             gameState.mapWidth = size.width;
             gameState.mapHeight = size.height;
 
@@ -2486,11 +2641,11 @@
                 Array(size.width).fill(TILES.WALL)
             );
 
-            // Generate main corridors
-            generateCorridors(config.corridorWidth);
+            // Generate main corridors with topology
+            generateCorridors(config.corridorWidth, topology, corridorDensity);
 
-            // Generate rooms
-            generateRooms(config.roomChance);
+            // Generate rooms with density
+            generateRooms(config.roomChance, roomDensity);
 
             // Add obstacles
             addObstacles(config.obstacleChance);
@@ -2511,7 +2666,33 @@
             placeTeachers(numTeachers, speedMultiplier);
         }
 
-        function generateCorridors(width) {
+        function generateCorridors(width, topology, density) {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            // Density multipliers for corridor count
+            const densityMultipliers = { low: 0.6, medium: 1.0, high: 1.5 };
+            const densityMult = densityMultipliers[density] || 1.0;
+
+            switch (topology) {
+                case 'labyrinth':
+                    generateLabyrinth(width);
+                    break;
+                case 'corridors':
+                    generateDenseCorridors(width, densityMult);
+                    break;
+                case 'openPlan':
+                    generateOpenPlan(width);
+                    break;
+                case 'grid':
+                default:
+                    generateGridCorridors(width, densityMult);
+                    break;
+            }
+        }
+
+        // Classic grid layout with main corridors
+        function generateGridCorridors(width, densityMult) {
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
 
@@ -2525,8 +2706,9 @@
                 }
             }
 
-            // Vertical corridors
-            const numVertical = Math.floor(mapW / 10) + 1;
+            // Vertical corridors - more with higher density
+            const baseVertical = Math.floor(mapW / 10) + 1;
+            const numVertical = Math.floor(baseVertical * densityMult);
             for (let i = 0; i < numVertical; i++) {
                 const x = Math.floor((i + 0.5) * mapW / numVertical);
                 for (let y = 1; y < mapH - 1; y++) {
@@ -2538,10 +2720,11 @@
                 }
             }
 
-            // Additional horizontal corridors for larger maps
-            if (mapH > 20) {
-                const extraCorridors = [Math.floor(mapH / 4), Math.floor(3 * mapH / 4)];
-                for (const y of extraCorridors) {
+            // Additional horizontal corridors based on density
+            const numHorizontal = Math.floor(Math.max(0, (mapH - 15) / 8) * densityMult);
+            for (let i = 0; i < numHorizontal; i++) {
+                const y = Math.floor((i + 1) * mapH / (numHorizontal + 2));
+                if (Math.abs(y - mainY) > 3) { // Don't overlap with main corridor
                     for (let x = 1; x < mapW - 1; x++) {
                         for (let dy = -Math.floor(width / 2); dy <= Math.floor(width / 2); dy++) {
                             if (y + dy > 0 && y + dy < mapH - 1) {
@@ -2553,7 +2736,214 @@
             }
         }
 
-        function generateRooms(roomChance) {
+        // Maze-like labyrinth using recursive backtracking
+        function generateLabyrinth(width) {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            // Use a cell-based approach for maze generation
+            const cellW = Math.floor((mapW - 2) / 3);
+            const cellH = Math.floor((mapH - 2) / 3);
+
+            // Track visited cells
+            const visited = Array(cellH).fill(null).map(() => Array(cellW).fill(false));
+            const stack = [];
+
+            // Start from center
+            let cx = Math.floor(cellW / 2);
+            let cy = Math.floor(cellH / 2);
+            visited[cy][cx] = true;
+            stack.push({ x: cx, y: cy });
+
+            // Carve initial cell
+            const carveCell = (cellX, cellY) => {
+                const px = 1 + cellX * 3 + 1;
+                const py = 1 + cellY * 3 + 1;
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (py + dy > 0 && py + dy < mapH - 1 && px + dx > 0 && px + dx < mapW - 1) {
+                            gameState.map[py + dy][px + dx] = TILES.FLOOR;
+                        }
+                    }
+                }
+            };
+
+            // Carve passage between cells
+            const carvePassage = (x1, y1, x2, y2) => {
+                const px1 = 1 + x1 * 3 + 1;
+                const py1 = 1 + y1 * 3 + 1;
+                const px2 = 1 + x2 * 3 + 1;
+                const py2 = 1 + y2 * 3 + 1;
+
+                const minX = Math.min(px1, px2);
+                const maxX = Math.max(px1, px2);
+                const minY = Math.min(py1, py2);
+                const maxY = Math.max(py1, py2);
+
+                for (let y = minY; y <= maxY; y++) {
+                    for (let x = minX; x <= maxX; x++) {
+                        if (y > 0 && y < mapH - 1 && x > 0 && x < mapW - 1) {
+                            gameState.map[y][x] = TILES.FLOOR;
+                        }
+                    }
+                }
+            };
+
+            carveCell(cx, cy);
+
+            // Recursive backtracking
+            while (stack.length > 0) {
+                const current = stack[stack.length - 1];
+                const neighbors = [];
+
+                const dirs = [
+                    { dx: 0, dy: -1 },
+                    { dx: 1, dy: 0 },
+                    { dx: 0, dy: 1 },
+                    { dx: -1, dy: 0 }
+                ];
+
+                for (const dir of dirs) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    if (nx >= 0 && nx < cellW && ny >= 0 && ny < cellH && !visited[ny][nx]) {
+                        neighbors.push({ x: nx, y: ny });
+                    }
+                }
+
+                if (neighbors.length > 0) {
+                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    visited[next.y][next.x] = true;
+                    carvePassage(current.x, current.y, next.x, next.y);
+                    carveCell(next.x, next.y);
+                    stack.push(next);
+                } else {
+                    stack.pop();
+                }
+            }
+
+            // Ensure left and right sides are accessible (for player start and exit)
+            const midY = Math.floor(mapH / 2);
+            for (let x = 1; x < 4; x++) {
+                gameState.map[midY][x] = TILES.FLOOR;
+                if (midY > 1) gameState.map[midY - 1][x] = TILES.FLOOR;
+                if (midY < mapH - 2) gameState.map[midY + 1][x] = TILES.FLOOR;
+            }
+            for (let x = mapW - 4; x < mapW - 1; x++) {
+                gameState.map[midY][x] = TILES.FLOOR;
+                if (midY > 1) gameState.map[midY - 1][x] = TILES.FLOOR;
+                if (midY < mapH - 2) gameState.map[midY + 1][x] = TILES.FLOOR;
+            }
+        }
+
+        // Dense network of interconnected corridors
+        function generateDenseCorridors(width, densityMult) {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            // Create many horizontal corridors
+            const numHorizontal = Math.floor((mapH / 5) * densityMult) + 2;
+            for (let i = 0; i < numHorizontal; i++) {
+                const y = Math.floor((i + 0.5) * mapH / numHorizontal);
+                const startX = Math.floor(Math.random() * 3) + 1;
+                const endX = mapW - Math.floor(Math.random() * 3) - 2;
+
+                for (let x = startX; x <= endX; x++) {
+                    for (let dy = -Math.floor(width / 2); dy <= Math.floor(width / 2); dy++) {
+                        if (y + dy > 0 && y + dy < mapH - 1) {
+                            gameState.map[y + dy][x] = TILES.FLOOR;
+                        }
+                    }
+                }
+            }
+
+            // Create many vertical corridors
+            const numVertical = Math.floor((mapW / 5) * densityMult) + 2;
+            for (let i = 0; i < numVertical; i++) {
+                const x = Math.floor((i + 0.5) * mapW / numVertical);
+                const startY = Math.floor(Math.random() * 3) + 1;
+                const endY = mapH - Math.floor(Math.random() * 3) - 2;
+
+                for (let y = startY; y <= endY; y++) {
+                    for (let dx = -Math.floor(width / 2); dx <= Math.floor(width / 2); dx++) {
+                        if (x + dx > 0 && x + dx < mapW - 1) {
+                            gameState.map[y][x + dx] = TILES.FLOOR;
+                        }
+                    }
+                }
+            }
+
+            // Add some diagonal connections for extra complexity
+            const numDiagonals = Math.floor(3 * densityMult);
+            for (let i = 0; i < numDiagonals; i++) {
+                const startX = Math.floor(Math.random() * (mapW - 10)) + 5;
+                const startY = Math.floor(Math.random() * (mapH - 10)) + 5;
+                const length = Math.floor(Math.random() * 8) + 5;
+                const dirX = Math.random() < 0.5 ? 1 : -1;
+                const dirY = Math.random() < 0.5 ? 1 : -1;
+
+                for (let step = 0; step < length; step++) {
+                    const x = startX + step * dirX;
+                    const y = startY + step * dirY;
+                    if (x > 0 && x < mapW - 1 && y > 0 && y < mapH - 1) {
+                        gameState.map[y][x] = TILES.FLOOR;
+                        if (x + 1 < mapW - 1) gameState.map[y][x + 1] = TILES.FLOOR;
+                        if (y + 1 < mapH - 1) gameState.map[y + 1][x] = TILES.FLOOR;
+                    }
+                }
+            }
+        }
+
+        // Open plan with large open areas and minimal walls
+        function generateOpenPlan(width) {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+
+            // Create large central open area
+            const marginX = Math.floor(mapW * 0.1) + 1;
+            const marginY = Math.floor(mapH * 0.1) + 1;
+
+            for (let y = marginY; y < mapH - marginY; y++) {
+                for (let x = marginX; x < mapW - marginX; x++) {
+                    gameState.map[y][x] = TILES.FLOOR;
+                }
+            }
+
+            // Add some structural pillars/walls for visual interest
+            const numPillars = Math.floor((mapW * mapH) / 80);
+            for (let i = 0; i < numPillars; i++) {
+                const px = Math.floor(Math.random() * (mapW - marginX * 2 - 4)) + marginX + 2;
+                const py = Math.floor(Math.random() * (mapH - marginY * 2 - 4)) + marginY + 2;
+                const pillarSize = Math.floor(Math.random() * 2) + 2;
+
+                for (let dy = 0; dy < pillarSize; dy++) {
+                    for (let dx = 0; dx < pillarSize; dx++) {
+                        if (py + dy < mapH - marginY && px + dx < mapW - marginX) {
+                            gameState.map[py + dy][px + dx] = TILES.WALL;
+                        }
+                    }
+                }
+            }
+
+            // Ensure edges are accessible
+            const midY = Math.floor(mapH / 2);
+            for (let x = 1; x < marginX + 2; x++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    if (midY + dy > 0 && midY + dy < mapH - 1) {
+                        gameState.map[midY + dy][x] = TILES.FLOOR;
+                    }
+                }
+            }
+            for (let x = mapW - marginX - 2; x < mapW - 1; x++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    if (midY + dy > 0 && midY + dy < mapH - 1) {
+                        gameState.map[midY + dy][x] = TILES.FLOOR;
+                    }
+                }
+            }
+        }
+
+        function generateRooms(roomChance, roomDensity) {
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
             const roomSizes = [
@@ -2563,7 +2953,11 @@
                 { w: 8, h: 6 }
             ];
 
-            const numRooms = Math.floor(mapW * mapH * roomChance / 30);
+            // Room density multipliers
+            const densityMultipliers = { few: 0.5, normal: 1.0, many: 1.8 };
+            const densityMult = densityMultipliers[roomDensity] || 1.0;
+
+            const numRooms = Math.floor(mapW * mapH * roomChance * densityMult / 30);
 
             for (let i = 0; i < numRooms; i++) {
                 const roomSize = roomSizes[Math.floor(Math.random() * roomSizes.length)];
@@ -4181,6 +4575,18 @@
 
             document.getElementById('map-size').addEventListener('change', (e) => {
                 settings.mapSize = e.target.value;
+            });
+
+            document.getElementById('map-topology').addEventListener('change', (e) => {
+                settings.mapTopology = e.target.value;
+            });
+
+            document.getElementById('corridor-density').addEventListener('change', (e) => {
+                settings.corridorDensity = e.target.value;
+            });
+
+            document.getElementById('room-density').addEventListener('change', (e) => {
+                settings.roomDensity = e.target.value;
             });
 
             // Menu buttons
