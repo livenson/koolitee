@@ -404,29 +404,35 @@
                 <div style="color: #aaa; margin-top: 5px;" id="menu-progress-text">0/17 completed</div>
             </div>
 
-            <!-- Free Play Settings -->
-            <div id="freeplay-settings" class="settings-panel" style="display: none;">
-                <div class="setting-row">
-                    <label>School Type:</label>
-                    <select id="school-type">
-                        <option value="elementary">Elementary (Easy)</option>
-                        <option value="middle" selected>Middle School (Medium)</option>
-                        <option value="high">High School (Hard)</option>
-                        <option value="university">University (Expert)</option>
-                    </select>
+            <!-- Free Play Settings (Collapsible) -->
+            <div id="freeplay-settings" class="settings-panel" style="display: none; padding: 10px;">
+                <div class="collapsible-header expanded" id="freeplay-toggle" onclick="toggleFreeplayPanel()">
+                    <span class="header-title" data-translate="freeplaySettings">🎮 Free Play Settings</span>
+                    <span class="toggle-icon">▼</span>
                 </div>
-                <div class="setting-row">
-                    <label>Map Size:</label>
-                    <select id="map-size">
-                        <option value="small">Small</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="large">Large</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label>Teachers:</label>
-                    <input type="range" id="teacher-count" min="2" max="8" value="4">
-                    <span id="teacher-count-display">4</span>
+                <div class="collapsible-content expanded" id="freeplay-content">
+                    <div class="setting-row">
+                        <label>School Type:</label>
+                        <select id="school-type">
+                            <option value="elementary">Elementary (Easy)</option>
+                            <option value="middle" selected>Middle School (Medium)</option>
+                            <option value="high">High School (Hard)</option>
+                            <option value="university">University (Expert)</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label>Map Size:</label>
+                        <select id="map-size">
+                            <option value="small">Small</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label>Teachers:</label>
+                        <input type="range" id="teacher-count" min="2" max="8" value="4">
+                        <span id="teacher-count-display">4</span>
+                    </div>
                 </div>
             </div>
 
@@ -826,6 +832,7 @@
 
                 // Game modes
                 freePlay: 'FREE PLAY',
+                freeplaySettings: 'Free Play Settings',
                 campaign: 'CAMPAIGN',
                 selectMode: 'Select Mode',
                 continueGame: 'CONTINUE',
@@ -993,6 +1000,7 @@
 
                 // Game modes
                 freePlay: 'VABAMÄNG',
+                freeplaySettings: 'Vabamängu seaded',
                 campaign: 'KAMPAANIA',
                 selectMode: 'Vali režiim',
                 continueGame: 'JÄTKA',
@@ -1160,6 +1168,7 @@
 
                 // Game modes
                 freePlay: 'BRĪVĀ SPĒLE',
+                freeplaySettings: 'Brīvās spēles iestatījumi',
                 campaign: 'KAMPAŅA',
                 selectMode: 'Izvēlies režīmu',
                 continueGame: 'TURPINĀT',
@@ -1327,6 +1336,7 @@
 
                 // Game modes
                 freePlay: 'LAISVAS ŽAIDIMAS',
+                freeplaySettings: 'Laisvo žaidimo nustatymai',
                 campaign: 'KAMPANIJA',
                 selectMode: 'Pasirink režimą',
                 continueGame: 'TĘSTI',
@@ -1498,6 +1508,7 @@
                 totalScore: 'Общий счёт',
                 campaign: 'КАМПАНИЯ',
                 freePlay: 'СВОБОДНАЯ ИГРА',
+                freeplaySettings: 'Настройки свободной игры',
 
                 // Random Events
                 eventsOn: '🎲 События: ВКЛ',
@@ -1927,6 +1938,16 @@
         function toggleMapConfigPanel() {
             const header = document.getElementById('map-config-toggle');
             const content = document.getElementById('map-config-content');
+            if (header && content) {
+                header.classList.toggle('expanded');
+                content.classList.toggle('expanded');
+                playSound('menu_click');
+            }
+        }
+
+        function toggleFreeplayPanel() {
+            const header = document.getElementById('freeplay-toggle');
+            const content = document.getElementById('freeplay-content');
             if (header && content) {
                 header.classList.toggle('expanded');
                 content.classList.toggle('expanded');
