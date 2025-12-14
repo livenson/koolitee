@@ -438,10 +438,20 @@
                 </ul>
 
                 <p style="margin-bottom: 15px;"><strong style="color: #ff6b6b;">TEACHERS:</strong></p>
-                <ul style="margin-left: 20px;">
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
                     <li>🧑‍🏫 Patrol Teacher - Follows set routes</li>
                     <li>👨‍🏫 Hunter Teacher - Actively chases you</li>
                     <li>👩‍🏫 Fast Teacher - Quick but predictable</li>
+                </ul>
+
+                <p style="margin-bottom: 15px;"><strong style="color: #9ca3af;">MAP TILES:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li><span style="display: inline-block; width: 16px; height: 16px; background: #4a4a6a; vertical-align: middle; margin-right: 5px; border-radius: 2px;"></span> Floor - Walkable area</li>
+                    <li><span style="display: inline-block; width: 16px; height: 16px; background: linear-gradient(#5c4033, #3d2817); vertical-align: middle; margin-right: 5px; border-radius: 2px;"></span> Wall - Cannot pass through</li>
+                    <li><span style="display: inline-block; width: 16px; height: 16px; background: #8b4513; vertical-align: middle; margin-right: 5px; border-radius: 2px;"></span> Desk - Classroom obstacle</li>
+                    <li><span style="display: inline-block; width: 16px; height: 16px; background: #4a90a4; vertical-align: middle; margin-right: 5px; border-radius: 2px;"></span> Locker - Corridor obstacle</li>
+                    <li><span style="display: inline-block; width: 16px; height: 16px; background: rgba(100, 200, 255, 0.5); vertical-align: middle; margin-right: 5px; border-radius: 2px;"></span> Wet Floor - Slippery surface</li>
+                    <li><span style="display: inline-block; width: 16px; height: 16px; background: #4ade80; vertical-align: middle; margin-right: 5px; border-radius: 2px;"></span> Exit - Escape here (green when unlocked)</li>
                 </ul>
             </div>
             <button class="menu-button" id="back-to-menu-button">BACK TO MENU</button>
@@ -688,6 +698,13 @@
                 patrolDesc: 'Patrol Teacher - Follows set routes',
                 hunterDesc: 'Hunter Teacher - Actively chases you',
                 fastDesc: 'Fast Teacher - Quick but predictable',
+                mapTiles: 'MAP TILES:',
+                floorDesc: 'Floor - Walkable area',
+                wallDesc: 'Wall - Cannot pass through',
+                deskDesc: 'Desk - Classroom obstacle',
+                lockerDesc: 'Locker - Corridor obstacle',
+                wetFloorDesc: 'Wet Floor - Slippery surface',
+                exitDesc: 'Exit - Escape here (green when unlocked)',
 
                 // Teacher labels
                 patrol: 'PATROL',
@@ -832,6 +849,13 @@
                 patrolDesc: 'Patrullõpetaja - Järgib kindlaid marsruute',
                 hunterDesc: 'Jahtija-õpetaja - Jälitab sind aktiivselt',
                 fastDesc: 'Kiire õpetaja - Kiire, kuid etteaimatav',
+                mapTiles: 'KAARDI PLOKID:',
+                floorDesc: 'Põrand - Kõnnitav ala',
+                wallDesc: 'Sein - Ei saa läbi minna',
+                deskDesc: 'Laud - Klassiruumi takistus',
+                lockerDesc: 'Kapp - Koridori takistus',
+                wetFloorDesc: 'Märg põrand - Libe pind',
+                exitDesc: 'Väljapääs - Põgene siit (roheline kui avatud)',
 
                 // Teacher labels
                 patrol: 'PATRULL',
@@ -976,6 +1000,13 @@
                 patrolDesc: 'Patruļas skolotājs - Seko noteiktiem maršrutiem',
                 hunterDesc: 'Mednieka skolotājs - Aktīvi tevi vajā',
                 fastDesc: 'Ātrais skolotājs - Ātrs, bet paredzams',
+                mapTiles: 'KARTES ELEMENTI:',
+                floorDesc: 'Grīda - Staigājama zona',
+                wallDesc: 'Siena - Nevar iziet cauri',
+                deskDesc: 'Galds - Klases šķērslis',
+                lockerDesc: 'Skapītis - Koridora šķērslis',
+                wetFloorDesc: 'Slapja grīda - Slidena virsma',
+                exitDesc: 'Izeja - Bēdz šeit (zaļa, kad atvērta)',
 
                 // Teacher labels
                 patrol: 'PATRULA',
@@ -1120,6 +1151,13 @@
                 patrolDesc: 'Patruliuojantis mokytojas - Seka nustatytus maršrutus',
                 hunterDesc: 'Medžiotojas mokytojas - Aktyviai tave vejasi',
                 fastDesc: 'Greitas mokytojas - Greitas, bet nuspėjamas',
+                mapTiles: 'ŽEMĖLAPIO ELEMENTAI:',
+                floorDesc: 'Grindys - Vaikščiojama zona',
+                wallDesc: 'Siena - Nepraeinamas',
+                deskDesc: 'Suolas - Klasės kliūtis',
+                lockerDesc: 'Spintelė - Koridoriaus kliūtis',
+                wetFloorDesc: 'Šlapios grindys - Slidus paviršius',
+                exitDesc: 'Išėjimas - Pabėk čia (žalias kai atrakintas)',
 
                 // Teacher labels
                 patrol: 'PATRULĖ',
@@ -1254,6 +1292,13 @@
                 patrolTeacher: 'Патрульный - Ходит по маршруту',
                 hunterTeacher: 'Охотник - Активно преследует',
                 fastTeacher: 'Быстрый - Скоростной, но предсказуемый',
+                mapTiles: 'ЭЛЕМЕНТЫ КАРТЫ:',
+                floorDesc: 'Пол - Проходимая зона',
+                wallDesc: 'Стена - Непроходимо',
+                deskDesc: 'Парта - Препятствие в классе',
+                lockerDesc: 'Шкафчик - Препятствие в коридоре',
+                wetFloorDesc: 'Мокрый пол - Скользкая поверхность',
+                exitDesc: 'Выход - Беги сюда (зелёный когда открыт)',
 
                 // Game Over
                 escaped: 'СБЕЖАЛ!',
