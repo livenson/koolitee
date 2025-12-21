@@ -1569,18 +1569,43 @@
             container.innerHTML = html;
         }
 
+        // Interpolated positions for other players (smooth movement)
+        const otherPlayerPositions = new Map(); // connectionId -> {x, y}
+
         // Draw other players on the canvas
         function drawOtherPlayers() {
             if (!mpState.active || !mpState.room) return;
 
             const others = mpState.room.getOthers();
 
+            // Clean up positions for disconnected players
+            const currentIds = new Set(others.map(o => o.connectionId));
+            for (const connId of otherPlayerPositions.keys()) {
+                if (!currentIds.has(connId)) {
+                    otherPlayerPositions.delete(connId);
+                }
+            }
+
             for (const other of others) {
                 if (!other.presence || !other.presence.isAlive) continue;
 
                 const p = other.presence;
-                const screenX = p.x - gameState.camera.x;
-                const screenY = p.y - gameState.camera.y;
+                const connId = other.connectionId;
+
+                // Get or create interpolated position
+                let interpPos = otherPlayerPositions.get(connId);
+                if (!interpPos) {
+                    interpPos = { x: p.x, y: p.y };
+                    otherPlayerPositions.set(connId, interpPos);
+                }
+
+                // Smoothly interpolate towards target position (lerp factor 0.2 = smooth)
+                const lerpFactor = 0.2;
+                interpPos.x += (p.x - interpPos.x) * lerpFactor;
+                interpPos.y += (p.y - interpPos.y) * lerpFactor;
+
+                const screenX = interpPos.x - gameState.camera.x;
+                const screenY = interpPos.y - gameState.camera.y;
 
                 // Skip if off screen
                 if (screenX < -50 || screenX > canvas.width + 50 ||
