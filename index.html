@@ -4799,6 +4799,16 @@
                     teacher.patrolTimer = 3; // Force immediate direction change next frame
                 }
 
+                // Update direction based on velocity (for hunters/fast teachers that chase)
+                if (teacher.vx !== 0 || teacher.vy !== 0) {
+                    // Face the dominant direction of movement
+                    if (Math.abs(teacher.vx) > Math.abs(teacher.vy)) {
+                        teacher.direction = teacher.vx > 0 ? 0 : 2; // right or left
+                    } else {
+                        teacher.direction = teacher.vy > 0 ? 1 : 3; // down or up
+                    }
+                }
+
                 // Animation
                 teacher.animFrame += 0.15;
             }
