@@ -93,14 +93,14 @@ Events like UFO Abduction, Dinosaur Stampede, Power Outage, etc. that temporaril
 The game supports real-time multiplayer using [Liveblocks](https://liveblocks.io/) for synchronization.
 
 **Architecture:**
-- **Host/Guest Model:** One player hosts, others join via 6-character room code
+- **Host/Guest Model:** One player hosts, others join via 3-character room code
 - **Map Synchronization:** Host generates the map and broadcasts complete map data to guests
 - **State Sync:** Player positions, collectibles, powerups, and teacher positions are synchronized
 
 **Key Components:**
 - `mpState` - Multiplayer state object (room, players, host status)
 - `liveblocksClient` - Liveblocks client for real-time sync
-- Room codes: 6-character alphanumeric (e.g., "ABC123")
+- Room codes: 3-character alphanumeric (e.g., "A7K")
 
 **Synchronization Flow:**
 1. Host creates room and generates map
