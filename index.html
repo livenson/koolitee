@@ -1049,12 +1049,41 @@
             return code;
         }
 
-        // Generate a random player name
+        // Generate a random funny player name based on current language
         function generatePlayerName() {
-            const adjectives = ['Swift', 'Clever', 'Sneaky', 'Quick', 'Brave', 'Lucky', 'Smart', 'Speedy'];
-            const nouns = ['Student', 'Runner', 'Escapee', 'Kid', 'Scholar', 'Pupil', 'Learner', 'Rebel'];
-            return adjectives[Math.floor(Math.random() * adjectives.length)] +
-                   nouns[Math.floor(Math.random() * nouns.length)];
+            const funnyNames = {
+                en: {
+                    adjectives: ['Homework-Eating', 'Chalk-Dusted', 'Detention-Dodging', 'Cafeteria-Lurking', 'Tardy', 'Sleepy', 'Snack-Hoarding', 'Doodling', 'Note-Passing', 'Backpack-Dragging'],
+                    nouns: ['Troublemaker', 'Prankster', 'Napper', 'Daydreamer', 'Scribbler', 'Snacker', 'Wanderer', 'Doodler', 'Whisperer', 'Yawner']
+                },
+                et: {
+                    adjectives: ['Kodutöö-Sööv', 'Kriidine', 'Hilinev', 'Unine', 'Näksiv', 'Joonistav', 'Sosistav', 'Haigutav', 'Sohisev', 'Pabistav'],
+                    nouns: ['Pahandustegija', 'Naljahambas', 'Uinuja', 'Unistaja', 'Kritseldaja', 'Näksija', 'Uitaja', 'Sosistaja', 'Haigutaja', 'Pomiseja']
+                },
+                lv: {
+                    adjectives: ['Mājasdarbu-Ēdošs', 'Krītains', 'Kavējošs', 'Miegains', 'Uzkodas-Krājošs', 'Zīmējošs', 'Čukstošs', 'Žāvājošs', 'Sapņojošs', 'Slinkojošs'],
+                    nouns: ['Nerātnis', 'Jokdaris', 'Snaudējs', 'Sapņotājs', 'Skricelētājs', 'Našķotājs', 'Klaiņotājs', 'Čukstētājs', 'Žāvātājs', 'Murmulētājs']
+                },
+                lt: {
+                    adjectives: ['Namų-Darbų-Valgantis', 'Kreidos', 'Vėluojantis', 'Mieguistas', 'Užkandžių-Kaupiantis', 'Piešiantis', 'Šnibždantis', 'Žiovuojantis', 'Svajojantis', 'Tingintis'],
+                    nouns: ['Išdykėlis', 'Pokštininkas', 'Snūduriuotojas', 'Svajotojas', 'Raižytojas', 'Užkandžiautojas', 'Bastūnas', 'Šnibždėtojas', 'Žiovuliukas', 'Murmėtojas']
+                },
+                ru: {
+                    adjectives: ['Домашку-Жующий', 'Мелом-Испачканный', 'Вечно-Опаздывающий', 'Сонный', 'Снеки-Прячущий', 'Рисующий', 'Шепчущий', 'Зевающий', 'Мечтающий', 'Ленивый'],
+                    nouns: ['Хулиган', 'Шутник', 'Соня', 'Мечтатель', 'Каракулист', 'Обжора', 'Бродяга', 'Шептун', 'Зевака', 'Бормотун']
+                }
+            };
+
+            const lang = settings.language || 'en';
+            const names = funnyNames[lang] || funnyNames.en;
+            const adjective = names.adjectives[Math.floor(Math.random() * names.adjectives.length)];
+            const noun = names.nouns[Math.floor(Math.random() * names.nouns.length)];
+
+            // For languages with compound adjectives (hyphenated), use space; otherwise concatenate
+            if (adjective.includes('-') || lang !== 'en') {
+                return adjective + ' ' + noun;
+            }
+            return adjective + noun;
         }
 
         // Create a multiplayer room (host)
