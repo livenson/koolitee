@@ -1784,12 +1784,15 @@
                 interpPos.x += (p.x - interpPos.x) * lerpFactor;
                 interpPos.y += (p.y - interpPos.y) * lerpFactor;
 
-                const screenX = interpPos.x - gameState.camera.x;
-                const screenY = interpPos.y - gameState.camera.y;
+                // Use world coordinates directly - camera transform is already applied via ctx.translate in render()
+                const screenX = interpPos.x;
+                const screenY = interpPos.y;
 
-                // Skip if off screen
-                if (screenX < -50 || screenX > canvas.width + 50 ||
-                    screenY < -50 || screenY > canvas.height + 50) continue;
+                // Skip if off screen (check against camera-adjusted bounds)
+                const viewX = interpPos.x - gameState.camera.x;
+                const viewY = interpPos.y - gameState.camera.y;
+                if (viewX < -50 || viewX > canvas.width + 50 ||
+                    viewY < -50 || viewY > canvas.height + 50) continue;
 
                 ctx.save();
                 ctx.translate(screenX, screenY);
