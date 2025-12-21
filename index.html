@@ -1292,14 +1292,13 @@
             }
 
             switch (event.type) {
-                case 'GAME_START':
-                    console.log('GAME_START received! isHost:', mpState.isHost, 'mapSeed:', event.mapSeed);
-                    // Only guests should respond to this
-                    if (!mpState.isHost) {
-                        console.log('Guest starting game with seed:', event.mapSeed);
-                        mpState.mapSeed = event.mapSeed;
+                case 'MAP_DATA':
+                    console.log('MAP_DATA received! isHost:', mpState.isHost);
+                    // Only guests should respond to this - receive map from host
+                    if (!mpState.isHost && event.mapData) {
+                        console.log('Guest receiving map data from host');
                         mpState.gameSettings = event.settings;
-                        startMultiplayerGame();
+                        startMultiplayerGameAsGuest(event.mapData);
                     }
                     break;
 
@@ -1454,20 +1453,20 @@
             `;
         }
 
-        // Start multiplayer game (called by host or triggered by GAME_START event)
-        function startMultiplayerGame() {
+        // Start multiplayer game as guest (receives map from host)
+        function startMultiplayerGameAsGuest(mapData) {
             gameMode = 'multiplayer';
 
             // Apply game settings
             settings.mapSize = mpState.gameSettings.mapSize;
             settings.teacherCount = mpState.gameSettings.teacherCount;
 
-            // Use seeded random for map generation
-            Math.seedrandom && Math.seedrandom(mpState.mapSeed);
-
-            // Start the game
+            // Start the game (will generate a temporary map)
             hideAllMenus();
             startGame();
+
+            // Apply the map data received from host (overwrites generated map)
+            applyMapData(mapData);
 
             // Show multiplayer HUD
             document.getElementById('multiplayer-players-hud').style.display = 'block';
@@ -1482,22 +1481,40 @@
                 mapSize: document.getElementById('mp-map-size').value,
                 teacherCount: parseInt(document.getElementById('mp-teacher-count').value)
             };
-            mpState.mapSeed = Math.floor(Math.random() * 1000000);
 
-            console.log('Host broadcasting GAME_START with seed:', mpState.mapSeed);
+            console.log('Host starting game and generating map...');
 
-            // Broadcast game start to all clients
-            mpState.room.broadcastEvent({
-                type: 'GAME_START',
-                mapSeed: mpState.mapSeed,
-                settings: mpState.gameSettings
-            });
+            // Start game for host first (this generates the map)
+            startMultiplayerGameAsHost();
 
-            // Small delay to ensure broadcast is sent before we start
+            // Small delay to ensure map is generated, then broadcast map data to all clients
             setTimeout(() => {
-                // Start game for host
-                startMultiplayerGame();
+                const mapData = serializeMapData();
+                console.log('Host broadcasting MAP_DATA to guests');
+
+                mpState.room.broadcastEvent({
+                    type: 'MAP_DATA',
+                    mapData: mapData,
+                    settings: mpState.gameSettings
+                });
             }, 100);
+        }
+
+        // Start multiplayer game as host (generates map)
+        function startMultiplayerGameAsHost() {
+            gameMode = 'multiplayer';
+
+            // Apply game settings
+            settings.mapSize = mpState.gameSettings.mapSize;
+            settings.teacherCount = mpState.gameSettings.teacherCount;
+
+            // Start the game (generates map)
+            hideAllMenus();
+            startGame();
+
+            // Show multiplayer HUD
+            document.getElementById('multiplayer-players-hud').style.display = 'block';
+            updateMultiplayerHUD();
         }
 
         // Update my presence (called in game loop)
@@ -1569,6 +1586,92 @@
             mpState.room.broadcastEvent({
                 type: 'STINK_BOMB'
             });
+        }
+
+        // Serialize map data for sharing
+        function serializeMapData() {
+            return {
+                map: gameState.map,
+                mapWidth: gameState.mapWidth,
+                mapHeight: gameState.mapHeight,
+                collectibles: gameState.collectibles.map(c => ({
+                    id: c.id,
+                    x: c.x,
+                    y: c.y,
+                    gridX: c.gridX,
+                    gridY: c.gridY,
+                    collected: c.collected
+                })),
+                powerups: gameState.powerups.map(p => ({
+                    id: p.id,
+                    x: p.x,
+                    y: p.y,
+                    gridX: p.gridX,
+                    gridY: p.gridY,
+                    type: p.type,
+                    collected: p.collected
+                })),
+                player: {
+                    x: player.x,
+                    y: player.y,
+                    gridX: player.gridX,
+                    gridY: player.gridY
+                },
+                teachers: teachers.map(t => ({
+                    id: t.id,
+                    x: t.x,
+                    y: t.y,
+                    type: t.type,
+                    direction: t.direction,
+                    patrolPoints: t.patrolPoints,
+                    currentPatrolIndex: t.currentPatrolIndex,
+                    speed: t.speed,
+                    seesPlayer: t.seesPlayer,
+                    stunned: t.stunned,
+                    stunnedTimer: t.stunnedTimer
+                }))
+            };
+        }
+
+        // Apply received map data from host
+        function applyMapData(mapData) {
+            console.log('Applying map data from host:', mapData);
+
+            // Apply map
+            gameState.map = mapData.map;
+            gameState.mapWidth = mapData.mapWidth;
+            gameState.mapHeight = mapData.mapHeight;
+
+            // Apply collectibles
+            gameState.collectibles = mapData.collectibles.map(c => ({
+                ...c,
+                collected: false
+            }));
+
+            // Apply powerups
+            gameState.powerups = mapData.powerups.map(p => ({
+                ...p,
+                collected: false
+            }));
+
+            // Apply player position
+            player.x = mapData.player.x;
+            player.y = mapData.player.y;
+            player.gridX = mapData.player.gridX;
+            player.gridY = mapData.player.gridY;
+
+            // Apply teachers
+            teachers.length = 0;
+            mapData.teachers.forEach(t => {
+                teachers.push({
+                    ...t,
+                    seesPlayer: false,
+                    stunned: false,
+                    stunnedTimer: 0
+                });
+            });
+
+            console.log('Map data applied successfully');
         }
 
         // Get all player scores (self and others)
