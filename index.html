@@ -1161,6 +1161,19 @@
                 mpState.room = room;
                 mpState.leaveRoom = leave;
 
+                // Subscribe to broadcast events IMMEDIATELY
+                room.subscribe('event', (eventData) => {
+                    console.log('Guest received event:', eventData);
+                    handleMultiplayerEvent(eventData);
+                });
+
+                // Subscribe to others for player list updates
+                room.subscribe('others', () => {
+                    if (mpState.active) {
+                        updateLobbyPlayerList();
+                    }
+                });
+
                 // Wait for connection and find host
                 return new Promise((resolve) => {
                     let connectionTimeout = setTimeout(() => {
@@ -1170,53 +1183,41 @@
                     }, 5000);
 
                     room.subscribe('status', (status) => {
+                        console.log('Guest room status:', status);
                         if (status === 'connected') {
                             const self = room.getSelf();
                             mpState.myConnectionId = self?.connectionId;
+                            mpState.active = true;
 
                             // Check if there's a host
-                            const others = room.getOthers();
-                            const host = others.find(o => o.presence?.isHost);
-                            if (host) {
-                                mpState.hostConnectionId = host.connectionId;
-                                clearTimeout(connectionTimeout);
-                                updateConnectionStatus('join-connection-status', 'connected', t('connected'));
-                                mpState.active = true;
+                            const checkForHost = () => {
+                                const others = room.getOthers();
+                                console.log('Looking for host, others:', others.length);
+                                const host = others.find(o => o.presence?.isHost);
+                                if (host) {
+                                    mpState.hostConnectionId = host.connectionId;
+                                    clearTimeout(connectionTimeout);
+                                    updateConnectionStatus('join-connection-status', 'connected', t('connected'));
+                                    document.getElementById('lobby-room-code').textContent = mpState.roomCode;
+                                    showMenu('multiplayer-lobby-screen');
+                                    updateLobbyPlayerList();
+                                    resolve(true);
+                                    return true;
+                                }
+                                return false;
+                            };
 
-                                // Switch to lobby screen
-                                document.getElementById('lobby-room-code').textContent = mpState.roomCode;
-                                showMenu('multiplayer-lobby-screen');
-                                updateLobbyPlayerList();
-                                resolve(true);
-                            } else {
-                                // No host found, wait a bit more
+                            // Try immediately, then retry after a delay
+                            if (!checkForHost()) {
                                 setTimeout(() => {
-                                    const others2 = room.getOthers();
-                                    const host2 = others2.find(o => o.presence?.isHost);
-                                    if (host2) {
-                                        mpState.hostConnectionId = host2.connectionId;
-                                        clearTimeout(connectionTimeout);
-                                        updateConnectionStatus('join-connection-status', 'connected', t('connected'));
-                                        mpState.active = true;
-                                        document.getElementById('lobby-room-code').textContent = mpState.roomCode;
-                                        showMenu('multiplayer-lobby-screen');
-                                        updateLobbyPlayerList();
-                                        resolve(true);
+                                    if (!checkForHost()) {
+                                        // Keep waiting - host might join later
+                                        console.log('No host yet, waiting...');
                                     }
                                 }, 1000);
                             }
                         }
                     });
-
-                    // Subscribe to others for player list updates
-                    room.subscribe('others', () => {
-                        if (mpState.active) {
-                            updateLobbyPlayerList();
-                        }
-                    });
-
-                    // Subscribe to broadcast events
-                    room.subscribe('event', handleMultiplayerEvent);
                 });
 
             } catch (e) {
@@ -1245,12 +1246,19 @@
 
         // Handle broadcast events from other players
         function handleMultiplayerEvent({ event, user, connectionId }) {
-            console.log('Received event:', event.type, event);
+            console.log('handleMultiplayerEvent called:', event);
+
+            if (!event || !event.type) {
+                console.warn('Invalid event received:', event);
+                return;
+            }
 
             switch (event.type) {
                 case 'GAME_START':
-                    // Host started the game
+                    console.log('GAME_START received! isHost:', mpState.isHost, 'mapSeed:', event.mapSeed);
+                    // Only guests should respond to this
                     if (!mpState.isHost) {
+                        console.log('Guest starting game with seed:', event.mapSeed);
                         mpState.mapSeed = event.mapSeed;
                         mpState.gameSettings = event.settings;
                         startMultiplayerGame();
@@ -1438,15 +1446,20 @@
             };
             mpState.mapSeed = Math.floor(Math.random() * 1000000);
 
-            // Broadcast game start
+            console.log('Host broadcasting GAME_START with seed:', mpState.mapSeed);
+
+            // Broadcast game start to all clients
             mpState.room.broadcastEvent({
                 type: 'GAME_START',
                 mapSeed: mpState.mapSeed,
                 settings: mpState.gameSettings
             });
 
-            // Start game for host
-            startMultiplayerGame();
+            // Small delay to ensure broadcast is sent before we start
+            setTimeout(() => {
+                // Start game for host
+                startMultiplayerGame();
+            }, 100);
         }
 
         // Update my presence (called in game loop)
