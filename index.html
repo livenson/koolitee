@@ -3561,10 +3561,18 @@
                         teachers.forEach(teacher => {
                             const dx = teacher.x - entity.x;
                             const dy = teacher.y - entity.y;
-                            if (Math.sqrt(dx*dx + dy*dy) < 100) {
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist < 100) {
                                 // Run away from ghost
-                                teacher.vx = dx * 2;
-                                teacher.vy = dy * 2;
+                                if (dist > 1) {
+                                    teacher.vx = (dx / dist) * teacher.speed * 3;
+                                    teacher.vy = (dy / dist) * teacher.speed * 3;
+                                } else {
+                                    // If too close, pick a random direction
+                                    const angle = Math.random() * Math.PI * 2;
+                                    teacher.vx = Math.cos(angle) * teacher.speed * 3;
+                                    teacher.vy = Math.sin(angle) * teacher.speed * 3;
+                                }
                                 teacher.scaredTimer = 1;
                             }
                         });
@@ -4771,15 +4779,24 @@
                 const newX = teacher.x + teacher.vx;
                 const newY = teacher.y + teacher.vy;
 
+                let hitWall = false;
                 if (!checkWallCollision(newX, teacher.y, TEACHER_SIZE)) {
                     teacher.x = newX;
                 } else {
                     teacher.vx = -teacher.vx;
+                    hitWall = true;
                 }
                 if (!checkWallCollision(teacher.x, newY, TEACHER_SIZE)) {
                     teacher.y = newY;
                 } else {
                     teacher.vy = -teacher.vy;
+                    hitWall = true;
+                }
+
+                // Force direction change on wall collision for patrol teachers
+                // This prevents getting stuck when updatePatrol overwrites reversed velocity
+                if (hitWall && teacher.chaseTimer <= 0 && !teacher.seesPlayer) {
+                    teacher.patrolTimer = 3; // Force immediate direction change next frame
                 }
 
                 // Animation
