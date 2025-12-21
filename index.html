@@ -1263,8 +1263,8 @@
             }
 
             switch (event.type) {
-                case 'MAP_DATA':
-                    console.log('MAP_DATA received! isHost:', mpState.isHost);
+                case 'GAME_START':
+                    console.log('GAME_START received! isHost:', mpState.isHost);
                     // Only guests should respond to this - receive map from host
                     if (!mpState.isHost && event.mapData) {
                         console.log('Guest receiving map data from host');
@@ -1461,10 +1461,10 @@
             // Small delay to ensure map is generated, then broadcast map data to all clients
             setTimeout(() => {
                 const mapData = serializeMapData();
-                console.log('Host broadcasting MAP_DATA to guests');
+                console.log('Host broadcasting GAME_START with map data to guests');
 
                 mpState.room.broadcastEvent({
-                    type: 'MAP_DATA',
+                    type: 'GAME_START',
                     mapData: mapData,
                     settings: mpState.gameSettings
                 });
