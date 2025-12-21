@@ -4121,15 +4121,30 @@
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
 
-            // Create many horizontal corridors
-            const numHorizontal = Math.floor((mapH / 5) * densityMult) + 2;
+            // Calculate effective corridor width (tiles carved on each side of center)
+            const halfWidth = Math.floor(width / 2);
+            const corridorWidth = 2 * halfWidth + 1; // Actual width in tiles
+
+            // Minimum spacing between corridor centers to prevent overlap
+            // Corridors need at least 1 tile wall between them
+            const minSpacing = corridorWidth + 1;
+
+            // Calculate maximum corridors that fit without overlapping
+            const maxHorizontal = Math.floor((mapH - 2) / minSpacing);
+            const maxVertical = Math.floor((mapW - 2) / minSpacing);
+
+            // Scale by density but don't exceed maximum
+            const numHorizontal = Math.min(maxHorizontal, Math.floor(maxHorizontal * densityMult * 0.7) + 2);
+            const numVertical = Math.min(maxVertical, Math.floor(maxVertical * densityMult * 0.7) + 2);
+
+            // Create horizontal corridors
             for (let i = 0; i < numHorizontal; i++) {
                 const y = Math.floor((i + 0.5) * mapH / numHorizontal);
                 const startX = Math.floor(Math.random() * 3) + 1;
                 const endX = mapW - Math.floor(Math.random() * 3) - 2;
 
                 for (let x = startX; x <= endX; x++) {
-                    for (let dy = -Math.floor(width / 2); dy <= Math.floor(width / 2); dy++) {
+                    for (let dy = -halfWidth; dy <= halfWidth; dy++) {
                         if (y + dy > 0 && y + dy < mapH - 1) {
                             gameState.map[y + dy][x] = TILES.FLOOR;
                         }
@@ -4137,15 +4152,14 @@
                 }
             }
 
-            // Create many vertical corridors
-            const numVertical = Math.floor((mapW / 5) * densityMult) + 2;
+            // Create vertical corridors
             for (let i = 0; i < numVertical; i++) {
                 const x = Math.floor((i + 0.5) * mapW / numVertical);
                 const startY = Math.floor(Math.random() * 3) + 1;
                 const endY = mapH - Math.floor(Math.random() * 3) - 2;
 
                 for (let y = startY; y <= endY; y++) {
-                    for (let dx = -Math.floor(width / 2); dx <= Math.floor(width / 2); dx++) {
+                    for (let dx = -halfWidth; dx <= halfWidth; dx++) {
                         if (x + dx > 0 && x + dx < mapW - 1) {
                             gameState.map[y][x + dx] = TILES.FLOOR;
                         }
