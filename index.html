@@ -699,6 +699,10 @@
             <h2>GAME OVER</h2>
             <div id="final-score">Score: 0</div>
             <div id="final-stats" style="margin-bottom: 20px; color: #aaa;"></div>
+            <div id="multiplayer-scores" style="display: none; margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; max-width: 300px;">
+                <div style="font-size: 14px; color: #f59e0b; margin-bottom: 10px; font-weight: bold;">PLAYER SCORES</div>
+                <div id="multiplayer-scores-list"></div>
+            </div>
             <button class="menu-button" id="retry-button">PLAY AGAIN</button>
             <button class="menu-button" id="menu-button">MAIN MENU</button>
         </div>
@@ -708,6 +712,10 @@
             <h2 id="level-complete-title" style="color: #4ade80;">LEVEL COMPLETE!</h2>
             <div id="level-name-display" style="font-size: 28px; color: #ffd700; margin: 10px 0;"></div>
             <div id="level-score" style="font-size: 24px; color: #fff; margin: 10px 0;">Score: 0</div>
+            <div id="level-multiplayer-scores" style="display: none; margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; max-width: 300px;">
+                <div style="font-size: 14px; color: #f59e0b; margin-bottom: 10px; font-weight: bold;">PLAYER SCORES</div>
+                <div id="level-multiplayer-scores-list"></div>
+            </div>
             <div id="level-progress" style="margin: 20px 0;">
                 <div style="color: #aaa; margin-bottom: 10px;">Progress</div>
                 <div id="progress-bar-container" style="width: 300px; height: 20px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; margin: 0 auto;">
@@ -1302,16 +1310,16 @@
                     break;
 
                 case 'LEVEL_COMPLETE':
-                    // Level completed
+                    // Level completed - show with multiplayer scores
                     if (!mpState.isHost) {
-                        showLevelCompleteScreen();
+                        showLevelCompleteScreen(event.scores);
                     }
                     break;
 
                 case 'GAME_OVER':
-                    // Game over
+                    // Game over - show with multiplayer scores
                     if (!mpState.isHost) {
-                        showGameOverScreen();
+                        showMultiplayerGameOverScreen(event.won, event.scores);
                     }
                     break;
             }
@@ -1498,7 +1506,8 @@
                 isDashing: player.isDashing,
                 invincible: player.invincible,
                 lives: gameState.lives,
-                isAlive: gameState.lives > 0
+                isAlive: gameState.lives > 0,
+                score: gameState.score
             });
         }
 
@@ -1634,6 +1643,62 @@
             });
 
             console.log('Map data applied successfully');
+        }
+
+        // Get all player scores (self and others)
+        function getAllPlayerScores() {
+            if (!mpState.active || !mpState.room) return [];
+
+            const scores = [];
+            const self = mpState.room.getSelf();
+            const others = mpState.room.getOthers();
+
+            // Add self
+            if (self?.presence) {
+                scores.push({
+                    name: self.presence.name,
+                    color: self.presence.color,
+                    score: gameState.score, // Use current gameState score for self
+                    isSelf: true
+                });
+            }
+
+            // Add others
+            for (const other of others) {
+                if (other.presence) {
+                    scores.push({
+                        name: other.presence.name,
+                        color: other.presence.color,
+                        score: other.presence.score || 0,
+                        isSelf: false
+                    });
+                }
+            }
+
+            // Sort by score descending
+            scores.sort((a, b) => b.score - a.score);
+            return scores;
+        }
+
+        // Broadcast game over event with scores
+        function broadcastGameOver(won, scores) {
+            if (!mpState.active || !mpState.room) return;
+
+            mpState.room.broadcastEvent({
+                type: 'GAME_OVER',
+                won: won,
+                scores: scores
+            });
+        }
+
+        // Broadcast level complete event with scores
+        function broadcastLevelComplete(scores) {
+            if (!mpState.active || !mpState.room) return;
+
+            mpState.room.broadcastEvent({
+                type: 'LEVEL_COMPLETE',
+                scores: scores
+            });
         }
 
         // Update multiplayer HUD during game
@@ -4922,17 +4987,32 @@
                 gameState.score += gameState.lives * 500;
             }
 
+            // Get multiplayer scores before showing screens
+            const mpScores = mpState.active ? getAllPlayerScores() : null;
+
+            // Broadcast game over to other players in multiplayer
+            if (mpState.active && mpState.isHost) {
+                broadcastGameOver(won, mpScores);
+            }
+
             // Campaign mode - show level complete screen
             if (gameMode === 'campaign' && won) {
-                showLevelCompleteScreen();
+                showLevelCompleteScreen(mpScores);
                 return;
             }
 
             // Free play mode or lost - show game over screen
+            showMultiplayerGameOverScreen(won, mpScores);
+        }
+
+        // Show game over screen with optional multiplayer scores
+        function showMultiplayerGameOverScreen(won, scores) {
             const screen = document.getElementById('game-over-screen');
             const title = screen.querySelector('h2');
             const scoreDisplay = document.getElementById('final-score');
             const statsDisplay = document.getElementById('final-stats');
+            const mpScoresContainer = document.getElementById('multiplayer-scores');
+            const mpScoresList = document.getElementById('multiplayer-scores-list');
 
             if (won) {
                 title.textContent = t('escaped');
@@ -4948,7 +5028,33 @@
                 ${t('livesRemaining')}: ${gameState.lives}
             `;
 
+            // Show multiplayer scores if available
+            if (scores && scores.length > 1) {
+                mpScoresContainer.style.display = 'block';
+                mpScoresList.innerHTML = renderMultiplayerScores(scores);
+            } else {
+                mpScoresContainer.style.display = 'none';
+            }
+
             screen.classList.remove('hidden');
+        }
+
+        // Render multiplayer scores list HTML
+        function renderMultiplayerScores(scores) {
+            let html = '';
+            scores.forEach((player, index) => {
+                const rankEmoji = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : ''));
+                const selfStyle = player.isSelf ? 'font-weight: bold;' : '';
+                html += `
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); ${selfStyle}">
+                        <span style="width: 24px; text-align: center;">${rankEmoji || (index + 1)}</span>
+                        <div style="width: 12px; height: 12px; background: ${player.color}; border-radius: 50%; border: 1px solid #fff;"></div>
+                        <span style="flex: 1; color: ${player.isSelf ? '#4ade80' : '#fff'};">${player.name}${player.isSelf ? ' (you)' : ''}</span>
+                        <span style="color: #ffd700;">${player.score}</span>
+                    </div>
+                `;
+            });
+            return html;
         }
 
         // ============================================
@@ -5666,7 +5772,7 @@
             }
         }
 
-        function showLevelCompleteScreen() {
+        function showLevelCompleteScreen(scores) {
             const level = LEVELS[currentLevel];
             document.getElementById('level-complete-title').textContent = t('levelComplete');
             document.getElementById('level-name-display').textContent = t(level.name);
@@ -5678,6 +5784,21 @@
 
             document.getElementById('next-level-button').textContent = t('nextLevel');
             document.getElementById('level-menu-button').textContent = t('mainMenu');
+
+            // Show multiplayer scores if available
+            const mpScoresContainer = document.getElementById('level-multiplayer-scores');
+            const mpScoresList = document.getElementById('level-multiplayer-scores-list');
+            if (scores && scores.length > 1) {
+                mpScoresContainer.style.display = 'block';
+                mpScoresList.innerHTML = renderMultiplayerScores(scores);
+            } else {
+                mpScoresContainer.style.display = 'none';
+            }
+
+            // Broadcast level complete to other players in multiplayer
+            if (mpState.active && mpState.isHost) {
+                broadcastLevelComplete(scores);
+            }
 
             // Add score to campaign total
             totalCampaignScore += gameState.score;
