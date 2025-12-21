@@ -1594,12 +1594,8 @@
                     y: t.y,
                     type: t.type,
                     direction: t.direction,
-                    patrolPoints: t.patrolPoints,
-                    currentPatrolIndex: t.currentPatrolIndex,
                     speed: t.speed,
-                    seesPlayer: t.seesPlayer,
-                    stunned: t.stunned,
-                    stunnedTimer: t.stunnedTimer
+                    patrolPath: t.patrolPath
                 }))
             };
         }
@@ -1631,18 +1627,29 @@
             player.gridX = mapData.player.gridX;
             player.gridY = mapData.player.gridY;
 
-            // Apply teachers
+            // Apply teachers - create full teacher objects with all required fields
             teachers.length = 0;
             mapData.teachers.forEach(t => {
                 teachers.push({
-                    ...t,
-                    seesPlayer: false,
+                    id: t.id,
+                    x: t.x,
+                    y: t.y,
+                    vx: 0,
+                    vy: 0,
+                    speed: t.speed,
+                    type: t.type,
+                    direction: t.direction,
+                    patrolTimer: 0,
+                    chaseTimer: 0,
                     stunned: false,
-                    stunnedTimer: 0
+                    stunnedTimer: 0,
+                    seesPlayer: false,
+                    animFrame: 0,
+                    patrolPath: t.patrolPath || []
                 });
             });
 
-            console.log('Map data applied successfully');
+            console.log('Map data applied successfully, teachers:', teachers.length);
         }
 
         // Get all player scores (self and others)
