@@ -9,8 +9,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>School Escape - Action Arcade Game</title>
-    <!-- Liveblocks for multiplayer -->
-    <script src="https://unpkg.com/@liveblocks/client@2.15.0/dist/liveblocks.umd.production.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1000,19 +998,36 @@
 
         // Liveblocks client
         let liveblocksClient = null;
+        let liveblocksModule = null;
+        let liveblocksLoading = null;
 
-        // Initialize Liveblocks client
-        function initLiveblocks() {
-            if (liveblocksClient) return;
+        // Initialize Liveblocks client (async - loads module from CDN)
+        async function initLiveblocks() {
+            if (liveblocksClient) return true;
 
-            try {
-                liveblocksClient = window.Liveblocks.createClient({
-                    publicApiKey: "pk_dev_7IfGTE86kE-WZ2BCeeK1dG0dNKHgPkbZsiCN0tOGMEiByC_gNuubIGBWxl4UCJsx",
-                });
-                console.log('Liveblocks client initialized');
-            } catch (e) {
-                console.error('Failed to initialize Liveblocks:', e);
+            // If already loading, wait for it
+            if (liveblocksLoading) {
+                return liveblocksLoading;
             }
+
+            liveblocksLoading = (async () => {
+                try {
+                    // Dynamically import Liveblocks from esm.sh CDN
+                    liveblocksModule = await import('https://esm.sh/@liveblocks/client@2.15.0');
+
+                    liveblocksClient = liveblocksModule.createClient({
+                        publicApiKey: "pk_dev_7IfGTE86kE-WZ2BCeeK1dG0dNKHgPkbZsiCN0tOGMEiByC_gNuubIGBWxl4UCJsx",
+                    });
+                    console.log('Liveblocks client initialized');
+                    return true;
+                } catch (e) {
+                    console.error('Failed to initialize Liveblocks:', e);
+                    liveblocksLoading = null;
+                    return false;
+                }
+            })();
+
+            return liveblocksLoading;
         }
 
         // Generate a random room code
@@ -1035,8 +1050,10 @@
 
         // Create a multiplayer room (host)
         async function createMultiplayerRoom() {
-            initLiveblocks();
-            if (!liveblocksClient) {
+            updateConnectionStatus('mp-connection-status', 'connecting', t('connecting'));
+
+            const success = await initLiveblocks();
+            if (!success || !liveblocksClient) {
                 updateConnectionStatus('mp-connection-status', 'error', t('connectionError'));
                 return;
             }
@@ -1110,8 +1127,10 @@
 
         // Join a multiplayer room
         async function joinMultiplayerRoom(code) {
-            initLiveblocks();
-            if (!liveblocksClient) {
+            updateConnectionStatus('join-connection-status', 'connecting', t('connecting'));
+
+            const success = await initLiveblocks();
+            if (!success || !liveblocksClient) {
                 updateConnectionStatus('join-connection-status', 'error', t('connectionError'));
                 return false;
             }
@@ -1120,8 +1139,6 @@
             mpState.isHost = false;
             mpState.playerName = generatePlayerName();
             mpState.playerColor = PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)];
-
-            updateConnectionStatus('join-connection-status', 'connecting', t('connecting'));
 
             try {
                 const roomId = `school-escape-${mpState.roomCode.toLowerCase()}`;
