@@ -1,6 +1,6 @@
 # School Escape - Action Arcade Game
 
-A fast-paced browser game where you play as a student escaping teachers in a dynamically generated school building. Collect all homework pages and reach the exit without getting caught!
+A fast-paced browser game where you play as a student escaping teachers in a dynamically generated school building. Collect all pizza slices and reach the exit without getting caught!
 
 ## How to Play
 
@@ -17,7 +17,7 @@ Simply open `index.html` in any modern web browser.
 
 ### Objective
 
-1. Collect all homework pages scattered around the school
+1. Collect all pizza slices scattered around the school
 2. Avoid the teachers patrolling the corridors
 3. Reach the EXIT door (turns green when all items collected)
 
@@ -64,7 +64,7 @@ Adjust from 2-8 teachers for your preferred challenge level.
 
 ## Scoring System
 
-- **100 points** per homework page collected
+- **100 points** per pizza slice collected
 - **Combo multiplier** (up to x10) for quick consecutive pickups
 - **500 bonus points** per life remaining when you escape
 - Keep your combo going - it resets after 2 seconds of no pickups!
