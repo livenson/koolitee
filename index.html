@@ -404,6 +404,8 @@
                 <div style="color: #aaa; margin-top: 5px;" id="menu-progress-text">0/17 completed</div>
             </div>
 
+            <button class="menu-button" id="start-button" style="display: none;">START GAME</button>
+
             <!-- Free Play Settings (Collapsible) -->
             <div id="freeplay-settings" class="settings-panel" style="display: none; padding: 10px;">
                 <div class="collapsible-header expanded" id="freeplay-toggle" onclick="toggleFreeplayPanel()">
@@ -498,7 +500,6 @@
                 </div>
             </div>
 
-            <button class="menu-button" id="start-button" style="display: none;">START GAME</button>
             <button class="menu-button" id="how-to-play-button">HOW TO PLAY</button>
 
             <div style="margin-top: 30px; color: #666; font-size: 12px;">
@@ -2676,13 +2677,13 @@
 
             switch (topology) {
                 case 'labyrinth':
-                    generateLabyrinth(width);
+                    generateLabyrinth(width, densityMult);
                     break;
                 case 'corridors':
                     generateDenseCorridors(width, densityMult);
                     break;
                 case 'openPlan':
-                    generateOpenPlan(width);
+                    generateOpenPlan(width, densityMult);
                     break;
                 case 'grid':
                 default:
@@ -2737,13 +2738,16 @@
         }
 
         // Maze-like labyrinth using recursive backtracking
-        function generateLabyrinth(width) {
+        function generateLabyrinth(width, densityMult) {
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
 
             // Use a cell-based approach for maze generation
-            const cellW = Math.floor((mapW - 2) / 3);
-            const cellH = Math.floor((mapH - 2) / 3);
+            // Density affects cell size: higher density = smaller cells = more corridors
+            const baseCellSize = 3;
+            const adjustedCellSize = Math.max(2, Math.floor(baseCellSize / Math.sqrt(densityMult)));
+            const cellW = Math.floor((mapW - 2) / adjustedCellSize);
+            const cellH = Math.floor((mapH - 2) / adjustedCellSize);
 
             // Track visited cells
             const visited = Array(cellH).fill(null).map(() => Array(cellW).fill(false));
@@ -2756,11 +2760,12 @@
             stack.push({ x: cx, y: cy });
 
             // Carve initial cell
+            const halfCell = Math.floor(adjustedCellSize / 2);
             const carveCell = (cellX, cellY) => {
-                const px = 1 + cellX * 3 + 1;
-                const py = 1 + cellY * 3 + 1;
-                for (let dy = -1; dy <= 1; dy++) {
-                    for (let dx = -1; dx <= 1; dx++) {
+                const px = 1 + cellX * adjustedCellSize + halfCell;
+                const py = 1 + cellY * adjustedCellSize + halfCell;
+                for (let dy = -halfCell; dy <= halfCell; dy++) {
+                    for (let dx = -halfCell; dx <= halfCell; dx++) {
                         if (py + dy > 0 && py + dy < mapH - 1 && px + dx > 0 && px + dx < mapW - 1) {
                             gameState.map[py + dy][px + dx] = TILES.FLOOR;
                         }
@@ -2770,10 +2775,10 @@
 
             // Carve passage between cells
             const carvePassage = (x1, y1, x2, y2) => {
-                const px1 = 1 + x1 * 3 + 1;
-                const py1 = 1 + y1 * 3 + 1;
-                const px2 = 1 + x2 * 3 + 1;
-                const py2 = 1 + y2 * 3 + 1;
+                const px1 = 1 + x1 * adjustedCellSize + halfCell;
+                const py1 = 1 + y1 * adjustedCellSize + halfCell;
+                const px2 = 1 + x2 * adjustedCellSize + halfCell;
+                const py2 = 1 + y2 * adjustedCellSize + halfCell;
 
                 const minX = Math.min(px1, px2);
                 const maxX = Math.max(px1, px2);
@@ -2895,13 +2900,16 @@
         }
 
         // Open plan with large open areas and minimal walls
-        function generateOpenPlan(width) {
+        function generateOpenPlan(width, densityMult) {
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
 
-            // Create large central open area
-            const marginX = Math.floor(mapW * 0.1) + 1;
-            const marginY = Math.floor(mapH * 0.1) + 1;
+            // Density affects margins: higher density = smaller margins = larger open area
+            // and more internal structure (pillars)
+            const baseMarginX = Math.floor(mapW * 0.1) + 1;
+            const baseMarginY = Math.floor(mapH * 0.1) + 1;
+            const marginX = Math.max(1, Math.floor(baseMarginX / densityMult));
+            const marginY = Math.max(1, Math.floor(baseMarginY / densityMult));
 
             for (let y = marginY; y < mapH - marginY; y++) {
                 for (let x = marginX; x < mapW - marginX; x++) {
@@ -2910,7 +2918,8 @@
             }
 
             // Add some structural pillars/walls for visual interest
-            const numPillars = Math.floor((mapW * mapH) / 80);
+            // Higher density = more pillars
+            const numPillars = Math.floor((mapW * mapH) / 80 * densityMult);
             for (let i = 0; i < numPillars; i++) {
                 const px = Math.floor(Math.random() * (mapW - marginX * 2 - 4)) + marginX + 2;
                 const py = Math.floor(Math.random() * (mapH - marginY * 2 - 4)) + marginY + 2;
