@@ -4732,8 +4732,9 @@
                 } else if (teacher.chaseTimer > 0) {
                     teacher.chaseTimer -= deltaTime;
                     // Continue moving toward last known position
-                } else if (!teacher.seesPlayer && teacher.type !== 'patrol' && gameState.reportedPlayerLocation) {
+                } else if (!teacher.seesPlayer && teacher.chaseTimer <= 0 && teacher.type !== 'patrol' && gameState.reportedPlayerLocation) {
                     // Hunter/Fast teachers respond to patrol's reported player location
+                    // Only when not currently chasing a player they saw themselves
                     const report = gameState.reportedPlayerLocation;
                     const reportAge = (Date.now() - report.time) / 1000;
 
