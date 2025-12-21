@@ -4017,7 +4017,10 @@
             // Use a cell-based approach for maze generation
             // Density affects cell size: higher density = smaller cells = more corridors
             const baseCellSize = 3;
-            const adjustedCellSize = Math.max(2, Math.floor(baseCellSize / Math.sqrt(densityMult)));
+            // Cell spacing must be larger than carved area to leave walls between cells
+            // carvedSize = 2*halfCell + 1 = baseCellSize, so spacing needs +1 for wall
+            // Minimum spacing is baseCellSize + 1 to ensure walls exist at any density
+            const adjustedCellSize = Math.max(baseCellSize + 1, Math.floor(baseCellSize / Math.sqrt(densityMult)) + 1);
             const cellW = Math.floor((mapW - 2) / adjustedCellSize);
             const cellH = Math.floor((mapH - 2) / adjustedCellSize);
 
@@ -4031,8 +4034,8 @@
             visited[cy][cx] = true;
             stack.push({ x: cx, y: cy });
 
-            // Carve initial cell
-            const halfCell = Math.floor(adjustedCellSize / 2);
+            // Carve initial cell - halfCell based on corridor width, not cell spacing
+            const halfCell = Math.floor(baseCellSize / 2);
             const carveCell = (cellX, cellY) => {
                 const px = 1 + cellX * adjustedCellSize + halfCell;
                 const py = 1 + cellY * adjustedCellSize + halfCell;
