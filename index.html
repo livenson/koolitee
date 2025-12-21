@@ -885,7 +885,8 @@
             playerPowerups: [null, null, null],
             particles: [],
             screenShake: 0,
-            camera: { x: 0, y: 0 }
+            camera: { x: 0, y: 0 },
+            reportedPlayerLocation: null  // Patrol teachers report player location here
         };
 
         // Player object
@@ -4712,6 +4713,15 @@
                 }
                 teacher.seesPlayer = nowSeesPlayer;
 
+                // Patrol teacher reports player location to other teachers
+                if (teacher.seesPlayer && teacher.type === 'patrol') {
+                    gameState.reportedPlayerLocation = {
+                        x: player.x,
+                        y: player.y,
+                        time: Date.now()
+                    };
+                }
+
                 // Different AI behaviors
                 if (teacher.seesPlayer && teacher.type !== 'patrol') {
                     // Chase player
@@ -4722,6 +4732,34 @@
                 } else if (teacher.chaseTimer > 0) {
                     teacher.chaseTimer -= deltaTime;
                     // Continue moving toward last known position
+                } else if (!teacher.seesPlayer && teacher.type !== 'patrol' && gameState.reportedPlayerLocation) {
+                    // Hunter/Fast teachers respond to patrol's reported player location
+                    const report = gameState.reportedPlayerLocation;
+                    const reportAge = (Date.now() - report.time) / 1000;
+
+                    // Only respond to reports less than 5 seconds old
+                    if (reportAge < 5) {
+                        const rdx = report.x - teacher.x;
+                        const rdy = report.y - teacher.y;
+                        const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+
+                        // Move toward reported location if not already there
+                        if (rdist > TILE_SIZE) {
+                            const angle = Math.atan2(rdy, rdx);
+                            teacher.vx = Math.cos(angle) * teacher.speed * speedMod;
+                            teacher.vy = Math.sin(angle) * teacher.speed * speedMod;
+                        } else {
+                            // Arrived at reported location, patrol normally
+                            updatePatrol(teacher, deltaTime);
+                            teacher.vx *= speedMod;
+                            teacher.vy *= speedMod;
+                        }
+                    } else {
+                        // Report too old, patrol normally
+                        updatePatrol(teacher, deltaTime);
+                        teacher.vx *= speedMod;
+                        teacher.vy *= speedMod;
+                    }
                 } else {
                     // Patrol behavior
                     updatePatrol(teacher, deltaTime);
@@ -5875,7 +5913,8 @@
                 playerPowerups: [null, null, null],
                 particles: [],
                 screenShake: 0,
-                camera: { x: 0, y: 0 }
+                camera: { x: 0, y: 0 },
+                reportedPlayerLocation: null  // Patrol teachers report player location here
             };
 
             // Reset player
