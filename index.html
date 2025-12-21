@@ -1571,7 +1571,8 @@
                     y: c.y,
                     gridX: c.gridX,
                     gridY: c.gridY,
-                    collected: c.collected
+                    collected: c.collected,
+                    animOffset: c.animOffset
                 })),
                 powerups: gameState.powerups.map(p => ({
                     id: p.id,
@@ -1580,7 +1581,8 @@
                     gridX: p.gridX,
                     gridY: p.gridY,
                     type: p.type,
-                    collected: p.collected
+                    collected: p.collected,
+                    animOffset: p.animOffset
                 })),
                 player: {
                     x: player.x,
@@ -1612,13 +1614,15 @@
             // Apply collectibles
             gameState.collectibles = mapData.collectibles.map(c => ({
                 ...c,
-                collected: false
+                collected: false,
+                animOffset: c.animOffset ?? Math.random() * Math.PI * 2
             }));
 
             // Apply powerups
             gameState.powerups = mapData.powerups.map(p => ({
                 ...p,
-                collected: false
+                collected: false,
+                animOffset: p.animOffset ?? Math.random() * Math.PI * 2
             }));
 
             // Apply player position
