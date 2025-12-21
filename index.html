@@ -6124,7 +6124,7 @@
             document.getElementById('mp-join-room').addEventListener('click', () => {
                 playSound('menu_click');
                 const code = document.getElementById('join-room-code').value.trim();
-                if (code.length >= 4) {
+                if (code.length === 3) {
                     joinMultiplayerRoom(code);
                 }
             });
