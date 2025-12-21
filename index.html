@@ -1778,53 +1778,30 @@
             container.innerHTML = html;
         }
 
-        // Interpolated positions for other players (smooth movement)
-        const otherPlayerPositions = new Map(); // connectionId -> {x, y}
-
         // Draw other players on the canvas
         function drawOtherPlayers() {
             if (!mpState.active || !mpState.room) return;
 
             const others = mpState.room.getOthers();
 
-            // Clean up positions for disconnected players
-            const currentIds = new Set(others.map(o => o.connectionId));
-            for (const connId of otherPlayerPositions.keys()) {
-                if (!currentIds.has(connId)) {
-                    otherPlayerPositions.delete(connId);
-                }
-            }
-
             for (const other of others) {
                 if (!other.presence || !other.presence.isAlive) continue;
 
                 const p = other.presence;
-                const connId = other.connectionId;
 
-                // Get or create interpolated position
-                let interpPos = otherPlayerPositions.get(connId);
-                if (!interpPos) {
-                    interpPos = { x: p.x, y: p.y };
-                    otherPlayerPositions.set(connId, interpPos);
-                }
+                // Use presence position directly (world coordinates)
+                // Camera transform is already applied via ctx.translate in render()
+                const worldX = p.x;
+                const worldY = p.y;
 
-                // Smoothly interpolate towards target position (lerp factor 0.2 = smooth)
-                const lerpFactor = 0.2;
-                interpPos.x += (p.x - interpPos.x) * lerpFactor;
-                interpPos.y += (p.y - interpPos.y) * lerpFactor;
-
-                // Use world coordinates directly - camera transform is already applied via ctx.translate in render()
-                const screenX = interpPos.x;
-                const screenY = interpPos.y;
-
-                // Skip if off screen (check against camera-adjusted bounds)
-                const viewX = interpPos.x - gameState.camera.x;
-                const viewY = interpPos.y - gameState.camera.y;
+                // Skip if off screen
+                const viewX = worldX - gameState.camera.x;
+                const viewY = worldY - gameState.camera.y;
                 if (viewX < -50 || viewX > canvas.width + 50 ||
                     viewY < -50 || viewY > canvas.height + 50) continue;
 
                 ctx.save();
-                ctx.translate(screenX, screenY);
+                ctx.translate(worldX, worldY);
 
                 // Draw dash trail
                 if (p.isDashing) {
@@ -1881,7 +1858,7 @@
                 ctx.fillStyle = p.color;
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(p.name, screenX, screenY - PLAYER_SIZE / 2 - 8);
+                ctx.fillText(p.name, worldX, worldY - PLAYER_SIZE / 2 - 8);
                 ctx.restore();
             }
         }
