@@ -46,6 +46,7 @@ index.html
 ### Game Modes
 1. **Campaign Mode:** 17 progressive levels (Grade 1 → Master Year 2)
 2. **Free Play Mode:** Customizable difficulty settings
+3. **Multiplayer Mode:** Real-time cooperative play with 2-8 players
 
 ### Level Configuration (LEVELS array, line ~598)
 Each level defines:
@@ -86,6 +87,45 @@ generateMap() → generateCorridors() → generateRooms() → addObstacles()
 
 ### Random Events (12 events, line ~578)
 Events like UFO Abduction, Dinosaur Stampede, Power Outage, etc. that temporarily modify gameplay.
+
+### Multiplayer System
+
+The game supports real-time multiplayer using [Liveblocks](https://liveblocks.io/) for synchronization.
+
+**Architecture:**
+- **Host/Guest Model:** One player hosts, others join via 3-character room code
+- **Map Synchronization:** Host generates the map and broadcasts complete map data to guests
+- **State Sync:** Player positions, collectibles, powerups, and teacher positions are synchronized
+
+**Key Components:**
+- `mpState` - Multiplayer state object (room, players, host status)
+- `liveblocksClient` - Liveblocks client for real-time sync
+- Room codes: 3-character alphanumeric (e.g., "A7K")
+
+**Synchronization Flow:**
+1. Host creates room and generates map
+2. Host broadcasts `GAME_START` event with full map data (tiles, collectibles, powerups, teachers, player spawn)
+3. Guests receive map data and apply it via `applyMapData()`
+4. During gameplay:
+   - Player positions sync via Liveblocks presence (~30fps)
+   - Host broadcasts teacher positions (~10fps)
+   - Collectible/powerup pickups broadcast as events
+   - Stink bomb effects sync to all players
+
+**Key Functions:**
+| Function | Purpose |
+|----------|---------|
+| `initLiveblocks()` | Initialize Liveblocks client from CDN |
+| `hostCreateRoom()` | Create room and become host |
+| `guestJoinRoom()` | Join existing room as guest |
+| `hostStartGame()` | Generate map and broadcast to guests |
+| `serializeMapData()` | Package map data for transmission |
+| `applyMapData()` | Apply received map data on guest |
+| `updateMyPresence()` | Broadcast local player position |
+| `broadcastTeacherPositions()` | Host syncs teacher state |
+| `drawOtherPlayers()` | Render other players on canvas |
+
+**Player Colors:** 8 predefined colors for multiplayer players (defined in `PLAYER_COLORS` array)
 
 ## Key Functions
 
@@ -174,6 +214,14 @@ Manual testing in browser. Check:
 - Campaign progress saves/loads
 - All power-ups function
 - Random events trigger and complete properly
+- **Multiplayer:** Test with 2+ browser windows:
+  - Host can create room and see room code
+  - Guest can join with room code
+  - Both players see identical maps (walls, collectibles, powerups, teachers)
+  - Player positions sync correctly (no drift or double-speed movement)
+  - Collectible pickups sync (item disappears for all players)
+  - Teacher positions sync (host controls AI, guests receive updates)
+  - Stink bomb affects all players' view of teachers
 
 ## Common Modifications
 
