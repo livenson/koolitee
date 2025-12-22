@@ -615,7 +615,6 @@
                         <select id="map-topology">
                             <option value="grid" data-translate="topologyGrid">Grid (Classic)</option>
                             <option value="labyrinth" data-translate="topologyLabyrinth">Labyrinth (Maze)</option>
-                            <option value="corridors" data-translate="topologyCorridors">Many Corridors</option>
                             <option value="openPlan" data-translate="topologyOpenPlan">Open Plan</option>
                         </select>
                     </div>
@@ -923,7 +922,7 @@
             language: 'en',
             eventsEnabled: false,
             // Map generation settings
-            mapTopology: 'grid',           // grid, labyrinth, corridors, openPlan
+            mapTopology: 'grid',           // grid, labyrinth, openPlan
             corridorDensity: 'medium',     // low, medium, high
             roomDensity: 'normal'          // few, normal, many
         };
@@ -2025,7 +2024,6 @@
                 mapTopology: 'Map Layout:',
                 topologyGrid: 'Grid (Classic)',
                 topologyLabyrinth: 'Labyrinth (Maze)',
-                topologyCorridors: 'Many Corridors',
                 topologyOpenPlan: 'Open Plan',
                 corridorDensity: 'Corridor Density:',
                 densityLow: 'Low',
@@ -2219,7 +2217,6 @@
                 mapTopology: 'Kaardi paigutus:',
                 topologyGrid: 'Ruudustik (Klassikaline)',
                 topologyLabyrinth: 'Labürint (Eksitav)',
-                topologyCorridors: 'Palju koridore',
                 topologyOpenPlan: 'Avatud plaan',
                 corridorDensity: 'Koridoride tihedus:',
                 densityLow: 'Madal',
@@ -2413,7 +2410,6 @@
                 mapTopology: 'Kartes izkārtojums:',
                 topologyGrid: 'Režģis (Klasiskais)',
                 topologyLabyrinth: 'Labirints (Maldīgs)',
-                topologyCorridors: 'Daudz koridoru',
                 topologyOpenPlan: 'Atvērts plāns',
                 corridorDensity: 'Koridoru blīvums:',
                 densityLow: 'Zems',
@@ -2607,7 +2603,6 @@
                 mapTopology: 'Žemėlapio išdėstymas:',
                 topologyGrid: 'Tinklelis (Klasikinis)',
                 topologyLabyrinth: 'Labirintas (Klaidinantis)',
-                topologyCorridors: 'Daug koridorių',
                 topologyOpenPlan: 'Atviras planas',
                 corridorDensity: 'Koridorių tankis:',
                 densityLow: 'Žemas',
@@ -2770,7 +2765,6 @@
                 mapTopology: 'Планировка карты:',
                 topologyGrid: 'Сетка (Классика)',
                 topologyLabyrinth: 'Лабиринт (Запутанный)',
-                topologyCorridors: 'Много коридоров',
                 topologyOpenPlan: 'Открытая планировка',
                 corridorDensity: 'Плотность коридоров:',
                 densityLow: 'Низкая',
@@ -3951,9 +3945,6 @@
                 case 'labyrinth':
                     generateLabyrinth(width, densityMult);
                     break;
-                case 'corridors':
-                    generateDenseCorridors(width, densityMult);
-                    break;
                 case 'openPlan':
                     generateOpenPlan(width, densityMult);
                     break;
@@ -4017,7 +4008,10 @@
             // Use a cell-based approach for maze generation
             // Density affects cell size: higher density = smaller cells = more corridors
             const baseCellSize = 3;
-            const adjustedCellSize = Math.max(2, Math.floor(baseCellSize / Math.sqrt(densityMult)));
+            // Cell spacing must be larger than carved area to leave walls between cells
+            // carvedSize = 2*halfCell + 1 = baseCellSize, so spacing needs +1 for wall
+            // Minimum spacing is baseCellSize + 1 to ensure walls exist at any density
+            const adjustedCellSize = Math.max(baseCellSize + 1, Math.floor(baseCellSize / Math.sqrt(densityMult)) + 1);
             const cellW = Math.floor((mapW - 2) / adjustedCellSize);
             const cellH = Math.floor((mapH - 2) / adjustedCellSize);
 
@@ -4031,8 +4025,8 @@
             visited[cy][cx] = true;
             stack.push({ x: cx, y: cy });
 
-            // Carve initial cell
-            const halfCell = Math.floor(adjustedCellSize / 2);
+            // Carve initial cell - halfCell based on corridor width, not cell spacing
+            const halfCell = Math.floor(baseCellSize / 2);
             const carveCell = (cellX, cellY) => {
                 const px = 1 + cellX * adjustedCellSize + halfCell;
                 const py = 1 + cellY * adjustedCellSize + halfCell;
@@ -4110,64 +4104,6 @@
                 gameState.map[midY][x] = TILES.FLOOR;
                 if (midY > 1) gameState.map[midY - 1][x] = TILES.FLOOR;
                 if (midY < mapH - 2) gameState.map[midY + 1][x] = TILES.FLOOR;
-            }
-        }
-
-        // Dense network of interconnected corridors
-        function generateDenseCorridors(width, densityMult) {
-            const mapW = gameState.mapWidth;
-            const mapH = gameState.mapHeight;
-
-            // Create many horizontal corridors
-            const numHorizontal = Math.floor((mapH / 5) * densityMult) + 2;
-            for (let i = 0; i < numHorizontal; i++) {
-                const y = Math.floor((i + 0.5) * mapH / numHorizontal);
-                const startX = Math.floor(Math.random() * 3) + 1;
-                const endX = mapW - Math.floor(Math.random() * 3) - 2;
-
-                for (let x = startX; x <= endX; x++) {
-                    for (let dy = -Math.floor(width / 2); dy <= Math.floor(width / 2); dy++) {
-                        if (y + dy > 0 && y + dy < mapH - 1) {
-                            gameState.map[y + dy][x] = TILES.FLOOR;
-                        }
-                    }
-                }
-            }
-
-            // Create many vertical corridors
-            const numVertical = Math.floor((mapW / 5) * densityMult) + 2;
-            for (let i = 0; i < numVertical; i++) {
-                const x = Math.floor((i + 0.5) * mapW / numVertical);
-                const startY = Math.floor(Math.random() * 3) + 1;
-                const endY = mapH - Math.floor(Math.random() * 3) - 2;
-
-                for (let y = startY; y <= endY; y++) {
-                    for (let dx = -Math.floor(width / 2); dx <= Math.floor(width / 2); dx++) {
-                        if (x + dx > 0 && x + dx < mapW - 1) {
-                            gameState.map[y][x + dx] = TILES.FLOOR;
-                        }
-                    }
-                }
-            }
-
-            // Add some diagonal connections for extra complexity
-            const numDiagonals = Math.floor(3 * densityMult);
-            for (let i = 0; i < numDiagonals; i++) {
-                const startX = Math.floor(Math.random() * (mapW - 10)) + 5;
-                const startY = Math.floor(Math.random() * (mapH - 10)) + 5;
-                const length = Math.floor(Math.random() * 8) + 5;
-                const dirX = Math.random() < 0.5 ? 1 : -1;
-                const dirY = Math.random() < 0.5 ? 1 : -1;
-
-                for (let step = 0; step < length; step++) {
-                    const x = startX + step * dirX;
-                    const y = startY + step * dirY;
-                    if (x > 0 && x < mapW - 1 && y > 0 && y < mapH - 1) {
-                        gameState.map[y][x] = TILES.FLOOR;
-                        if (x + 1 < mapW - 1) gameState.map[y][x + 1] = TILES.FLOOR;
-                        if (y + 1 < mapH - 1) gameState.map[y + 1][x] = TILES.FLOOR;
-                    }
-                }
             }
         }
 
