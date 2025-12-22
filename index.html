@@ -354,8 +354,35 @@
         }
 
         .collapsible-content.expanded {
-            max-height: 200px;
+            max-height: 350px;
             padding: 15px;
+        }
+
+        /* Help Button */
+        .help-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border: 2px solid #818cf8;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .help-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
         }
 
         /* Multiplayer Styles */
@@ -552,7 +579,7 @@
                 </div>
                 <div class="collapsible-content expanded" id="freeplay-content">
                     <div class="setting-row">
-                        <label>School Type:</label>
+                        <label data-translate="schoolType">School Type:</label>
                         <select id="school-type">
                             <option value="elementary">Elementary (Easy)</option>
                             <option value="middle" selected>Middle School (Medium)</option>
@@ -561,7 +588,7 @@
                         </select>
                     </div>
                     <div class="setting-row">
-                        <label>Map Size:</label>
+                        <label data-translate="mapSize">Map Size:</label>
                         <select id="map-size">
                             <option value="small">Small</option>
                             <option value="medium" selected>Medium</option>
@@ -569,7 +596,7 @@
                         </select>
                     </div>
                     <div class="setting-row">
-                        <label>Teachers:</label>
+                        <label data-translate="teachers">Teachers:</label>
                         <input type="range" id="teacher-count" min="2" max="8" value="4">
                         <span id="teacher-count-display">4</span>
                     </div>
@@ -584,7 +611,7 @@
                 </div>
                 <div class="collapsible-content" id="settings-content">
                     <div class="setting-row">
-                        <label>Language:</label>
+                        <label data-translate="language">Language:</label>
                         <select id="language-select" onchange="setLanguage(this.value)">
                             <option value="en">English</option>
                             <option value="et">Eesti</option>
@@ -592,6 +619,22 @@
                             <option value="lt">Lietuvių</option>
                             <option value="ru">Русский</option>
                         </select>
+                    </div>
+                    <div class="setting-row">
+                        <label data-translate="avatarLabel">Avatar:</label>
+                        <select id="avatar-select" onchange="setAvatar(this.value)">
+                            <option value="default" data-translate="avatarDefault">Default Student</option>
+                            <option value="nerd" data-translate="avatarNerd">Nerd</option>
+                            <option value="jock" data-translate="avatarJock">Jock</option>
+                            <option value="goth" data-translate="avatarGoth">Goth</option>
+                            <option value="artist" data-translate="avatarArtist">Artist</option>
+                            <option value="skater" data-translate="avatarSkater">Skater</option>
+                            <option value="preppy" data-translate="avatarPreppy">Preppy</option>
+                            <option value="punk" data-translate="avatarPunk">Punk</option>
+                        </select>
+                    </div>
+                    <div class="setting-row" style="justify-content: center;">
+                        <canvas id="avatar-preview" width="80" height="80" style="border: 2px solid #4b5563; border-radius: 8px; background: #374151;"></canvas>
                     </div>
                     <div class="setting-row" style="justify-content: center; gap: 20px;">
                         <button class="sound-btn" id="sound-toggle" onclick="toggleSound()">🔊 Sound: ON</button>
@@ -637,12 +680,13 @@
                 </div>
             </div>
 
-            <button class="menu-button" id="how-to-play-button">HOW TO PLAY</button>
-
             <div style="margin-top: 30px; color: #666; font-size: 12px;">
                 © 2025 Ilja Livenson and Mark Livenson
             </div>
         </div>
+
+        <!-- Help Button (Fixed Position) -->
+        <button class="help-button" id="how-to-play-button" title="How to Play">?</button>
 
         <!-- How To Play -->
         <div id="how-to-play-screen" class="menu-screen hidden">
@@ -921,6 +965,7 @@
             musicEnabled: false,
             language: 'en',
             eventsEnabled: false,
+            playerAvatar: 'default',       // default, nerd, jock, goth, artist, skater, preppy, punk
             // Map generation settings
             mapTopology: 'grid',           // grid, labyrinth, openPlan
             corridorDensity: 'medium',     // low, medium, high
@@ -1003,6 +1048,18 @@
         const PLAYER_COLORS = [
             '#ff6b6b', '#4ade80', '#60a5fa', '#fbbf24',
             '#a78bfa', '#f472b6', '#34d399', '#fb923c'
+        ];
+
+        // Avatar types for player customization
+        const AVATAR_TYPES = [
+            { id: 'default', bodyColor: '#60a5fa', backpackColor: '#f97316', accessory: null },
+            { id: 'nerd', bodyColor: '#a78bfa', backpackColor: '#6366f1', accessory: 'glasses' },
+            { id: 'jock', bodyColor: '#ef4444', backpackColor: '#dc2626', accessory: 'headband' },
+            { id: 'goth', bodyColor: '#1f2937', backpackColor: '#4b5563', accessory: 'spikes' },
+            { id: 'artist', bodyColor: '#ec4899', backpackColor: '#be185d', accessory: 'beret' },
+            { id: 'skater', bodyColor: '#14b8a6', backpackColor: '#0d9488', accessory: 'cap' },
+            { id: 'preppy', bodyColor: '#fbbf24', backpackColor: '#d97706', accessory: 'bowtie' },
+            { id: 'punk', bodyColor: '#84cc16', backpackColor: '#65a30d', accessory: 'mohawk' }
         ];
 
         // Liveblocks client
@@ -2034,6 +2091,17 @@
                 roomsNormal: 'Normal',
                 roomsMany: 'Many Rooms',
 
+                // Avatar
+                avatarLabel: 'Avatar:',
+                avatarDefault: 'Default Student',
+                avatarNerd: 'Nerd',
+                avatarJock: 'Jock',
+                avatarGoth: 'Goth',
+                avatarArtist: 'Artist',
+                avatarSkater: 'Skater',
+                avatarPreppy: 'Preppy',
+                avatarPunk: 'Punk',
+
                 // Multiplayer
                 multiplayer: 'MULTIPLAYER',
                 multiplayerDesc: 'Play with friends online!',
@@ -2226,6 +2294,17 @@
                 roomsFew: 'Vähe tube',
                 roomsNormal: 'Tavaline',
                 roomsMany: 'Palju tube',
+
+                // Avatar
+                avatarLabel: 'Avatar:',
+                avatarDefault: 'Tavaline õpilane',
+                avatarNerd: 'Nohik',
+                avatarJock: 'Sportlane',
+                avatarGoth: 'Gott',
+                avatarArtist: 'Kunstnik',
+                avatarSkater: 'Rulataja',
+                avatarPreppy: 'Snobb',
+                avatarPunk: 'Punkkar',
 
                 // Multiplayer
                 multiplayer: 'MITMIKMÄNG',
@@ -2420,6 +2499,17 @@
                 roomsNormal: 'Normāls',
                 roomsMany: 'Daudz istabu',
 
+                // Avatar
+                avatarLabel: 'Avatārs:',
+                avatarDefault: 'Parasts skolēns',
+                avatarNerd: 'Zinis',
+                avatarJock: 'Sportists',
+                avatarGoth: 'Gots',
+                avatarArtist: 'Mākslinieks',
+                avatarSkater: 'Skeiters',
+                avatarPreppy: 'Bagātnieks',
+                avatarPunk: 'Panks',
+
                 // Multiplayer
                 multiplayer: 'DAUDZSPĒLĒTĀJU',
                 multiplayerDesc: 'Spēlē ar draugiem tiešsaistē!',
@@ -2613,6 +2703,17 @@
                 roomsNormal: 'Normalus',
                 roomsMany: 'Daug kambarių',
 
+                // Avatar
+                avatarLabel: 'Avataras:',
+                avatarDefault: 'Paprastas mokinys',
+                avatarNerd: 'Mokinukas',
+                avatarJock: 'Sportininkas',
+                avatarGoth: 'Gotas',
+                avatarArtist: 'Menininkas',
+                avatarSkater: 'Riedlenčių mėgėjas',
+                avatarPreppy: 'Pasipūtėlis',
+                avatarPunk: 'Pankas',
+
                 // Multiplayer
                 multiplayer: 'DAUGELIO ŽAIDĖJŲ',
                 multiplayerDesc: 'Žaisk su draugais internete!',
@@ -2775,6 +2876,17 @@
                 roomsNormal: 'Нормальная',
                 roomsMany: 'Много комнат',
 
+                // Avatar
+                avatarLabel: 'Аватар:',
+                avatarDefault: 'Обычный ученик',
+                avatarNerd: 'Ботаник',
+                avatarJock: 'Спортсмен',
+                avatarGoth: 'Гот',
+                avatarArtist: 'Художник',
+                avatarSkater: 'Скейтер',
+                avatarPreppy: 'Мажор',
+                avatarPunk: 'Панк',
+
                 // Multiplayer
                 multiplayer: 'МУЛЬТИПЛЕЕР',
                 multiplayerDesc: 'Играй с друзьями онлайн!',
@@ -2812,14 +2924,16 @@
             document.querySelector('#main-menu h1').textContent = t('title');
             document.querySelector('#main-menu h2').textContent = t('subtitle');
             document.getElementById('start-button').textContent = t('startGame');
-            document.getElementById('how-to-play-button').textContent = t('howToPlay');
+            // Help button just shows "?" - update title for accessibility
+            document.getElementById('how-to-play-button').title = t('howToPlay');
 
-            // Update settings labels
-            const settingLabels = document.querySelectorAll('.setting-row label');
-            if (settingLabels[0]) settingLabels[0].textContent = t('schoolType');
-            if (settingLabels[1]) settingLabels[1].textContent = t('mapSize');
-            if (settingLabels[2]) settingLabels[2].textContent = t('teachers');
-            if (settingLabels[3]) settingLabels[3].textContent = t('language');
+            // Update settings labels using data-translate attributes
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (translations[settings.language] && translations[settings.language][key]) {
+                    el.textContent = translations[settings.language][key];
+                }
+            });
 
             // Update school type options
             const schoolTypeSelect = document.getElementById('school-type');
@@ -2833,6 +2947,19 @@
             mapSizeSelect.options[0].textContent = t('small');
             mapSizeSelect.options[1].textContent = t('medium');
             mapSizeSelect.options[2].textContent = t('large');
+
+            // Update avatar options
+            const avatarSelect = document.getElementById('avatar-select');
+            if (avatarSelect) {
+                avatarSelect.options[0].textContent = t('avatarDefault');
+                avatarSelect.options[1].textContent = t('avatarNerd');
+                avatarSelect.options[2].textContent = t('avatarJock');
+                avatarSelect.options[3].textContent = t('avatarGoth');
+                avatarSelect.options[4].textContent = t('avatarArtist');
+                avatarSelect.options[5].textContent = t('avatarSkater');
+                avatarSelect.options[6].textContent = t('avatarPreppy');
+                avatarSelect.options[7].textContent = t('avatarPunk');
+            }
 
             // Update sound buttons
             updateSoundButtons();
@@ -2901,6 +3028,184 @@
             settings.language = lang;
             updateLanguage();
             playSound('menu_click');
+        }
+
+        function setAvatar(avatarId) {
+            settings.playerAvatar = avatarId;
+            localStorage.setItem('schoolEscape_playerAvatar', avatarId);
+            updateAvatarPreview();
+            playSound('menu_click');
+        }
+
+        function updateAvatarPreview() {
+            const previewCanvas = document.getElementById('avatar-preview');
+            if (!previewCanvas) return;
+
+            const previewCtx = previewCanvas.getContext('2d');
+            const avatar = AVATAR_TYPES.find(a => a.id === settings.playerAvatar) || AVATAR_TYPES[0];
+
+            // Clear canvas
+            previewCtx.fillStyle = '#374151';
+            previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            previewCtx.save();
+            previewCtx.translate(previewCanvas.width / 2, previewCanvas.height / 2);
+
+            const size = 28; // Preview size
+
+            // Shadow
+            previewCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            previewCtx.beginPath();
+            previewCtx.ellipse(0, size / 2 - 3, size / 2, 4, 0, 0, Math.PI * 2);
+            previewCtx.fill();
+
+            // Body
+            previewCtx.fillStyle = avatar.bodyColor;
+            previewCtx.beginPath();
+            previewCtx.arc(0, 0, size / 2, 0, Math.PI * 2);
+            previewCtx.fill();
+
+            // Backpack
+            previewCtx.fillStyle = avatar.backpackColor;
+            previewCtx.fillRect(-size / 2 - 3, -5, 6, 14);
+
+            // Draw accessory behind
+            drawPreviewAccessory(previewCtx, avatar.accessory, size, 'behind');
+
+            // Eyes
+            previewCtx.fillStyle = '#fff';
+            previewCtx.beginPath();
+            previewCtx.arc(-4, -2, 4, 0, Math.PI * 2);
+            previewCtx.arc(4, -2, 4, 0, Math.PI * 2);
+            previewCtx.fill();
+
+            previewCtx.fillStyle = '#333';
+            previewCtx.beginPath();
+            previewCtx.arc(-4, -2, 2, 0, Math.PI * 2);
+            previewCtx.arc(4, -2, 2, 0, Math.PI * 2);
+            previewCtx.fill();
+
+            // Smile
+            previewCtx.strokeStyle = '#333';
+            previewCtx.lineWidth = 2;
+            previewCtx.beginPath();
+            if (avatar.id === 'goth') {
+                previewCtx.arc(0, 8, 5, Math.PI + 0.2, -0.2);
+            } else {
+                previewCtx.arc(0, 2, 5, 0.2, Math.PI - 0.2);
+            }
+            previewCtx.stroke();
+
+            // Draw accessory front
+            drawPreviewAccessory(previewCtx, avatar.accessory, size, 'front');
+
+            previewCtx.restore();
+        }
+
+        function drawPreviewAccessory(ctx, accessory, size, layer) {
+            if (!accessory) return;
+
+            switch (accessory) {
+                case 'glasses':
+                    if (layer === 'front') {
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(-4, -2, 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(4, -2, 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(-1, -2);
+                        ctx.lineTo(1, -2);
+                        ctx.stroke();
+                    }
+                    break;
+
+                case 'headband':
+                    if (layer === 'front') {
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(-size / 2, -size / 2 + 2, size, 4);
+                        ctx.strokeStyle = '#ef4444';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(-size / 2, -size / 2 + 2, size, 4);
+                    }
+                    break;
+
+                case 'spikes':
+                    if (layer === 'behind') {
+                        ctx.fillStyle = '#9ca3af';
+                        for (let i = -2; i <= 2; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(i * 5, -size / 2 - 2);
+                            ctx.lineTo(i * 5 - 3, -size / 2 + 4);
+                            ctx.lineTo(i * 5 + 3, -size / 2 + 4);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                    }
+                    break;
+
+                case 'beret':
+                    if (layer === 'front') {
+                        ctx.fillStyle = '#be185d';
+                        ctx.beginPath();
+                        ctx.ellipse(0, -size / 2 + 2, size / 2 + 3, 5, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(0, -size / 2, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'cap':
+                    if (layer === 'front') {
+                        ctx.fillStyle = '#0d9488';
+                        ctx.beginPath();
+                        ctx.arc(0, -size / 2 + 4, size / 2, Math.PI, 0);
+                        ctx.fill();
+                        ctx.fillStyle = '#115e59';
+                        ctx.fillRect(-4, -size / 2 + 4, 8, 4);
+                    }
+                    break;
+
+                case 'bowtie':
+                    if (layer === 'front') {
+                        ctx.fillStyle = '#7c3aed';
+                        ctx.beginPath();
+                        ctx.moveTo(0, size / 2 - 6);
+                        ctx.lineTo(-8, size / 2 - 10);
+                        ctx.lineTo(-8, size / 2 - 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.moveTo(0, size / 2 - 6);
+                        ctx.lineTo(8, size / 2 - 10);
+                        ctx.lineTo(8, size / 2 - 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.fillStyle = '#5b21b6';
+                        ctx.beginPath();
+                        ctx.arc(0, size / 2 - 6, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'mohawk':
+                    if (layer === 'behind') {
+                        ctx.fillStyle = '#84cc16';
+                        for (let i = 0; i < 5; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(-6 + i * 3, -size / 2);
+                            ctx.lineTo(-4 + i * 3, -size / 2 - 10 - Math.sin(i) * 3);
+                            ctx.lineTo(-2 + i * 3, -size / 2);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                    }
+                    break;
+            }
         }
 
         // ============================================
@@ -5618,6 +5923,9 @@
         function drawPlayer() {
             const time = Date.now() / 1000;
 
+            // Get current avatar configuration
+            const avatar = AVATAR_TYPES.find(a => a.id === settings.playerAvatar) || AVATAR_TYPES[0];
+
             ctx.save();
             ctx.translate(player.x, player.y);
 
@@ -5651,19 +5959,22 @@
             ctx.ellipse(0, PLAYER_SIZE / 2 - 3, PLAYER_SIZE / 2, 4, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Player body
-            ctx.fillStyle = '#60a5fa';
+            // Player body - use avatar color
+            ctx.fillStyle = avatar.bodyColor;
             ctx.beginPath();
             ctx.arc(0, 0, PLAYER_SIZE / 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Backpack
-            ctx.fillStyle = '#f97316';
+            // Backpack - use avatar backpack color
+            ctx.fillStyle = avatar.backpackColor;
             ctx.fillRect(-PLAYER_SIZE / 2 - 3, -5, 6, 14);
 
             // Face
             const dirAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
             const faceAngle = dirAngles[player.direction];
+
+            // Draw accessory before face (some accessories go behind)
+            drawPlayerAccessory(avatar.accessory, faceAngle, 'behind');
 
             // Eyes
             ctx.fillStyle = '#fff';
@@ -5678,14 +5989,142 @@
             ctx.arc(Math.cos(faceAngle) * 5 + 4, -2, 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Smile
+            // Smile - goth has a frown
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(0, 2, 5, 0.2, Math.PI - 0.2);
+            if (avatar.id === 'goth') {
+                ctx.arc(0, 8, 5, Math.PI + 0.2, -0.2);
+            } else {
+                ctx.arc(0, 2, 5, 0.2, Math.PI - 0.2);
+            }
             ctx.stroke();
 
+            // Draw accessory on top of face
+            drawPlayerAccessory(avatar.accessory, faceAngle, 'front');
+
             ctx.restore();
+        }
+
+        function drawPlayerAccessory(accessory, faceAngle, layer) {
+            if (!accessory) return;
+
+            switch (accessory) {
+                case 'glasses':
+                    if (layer === 'front') {
+                        // Nerd glasses
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 2;
+                        // Left lens
+                        ctx.beginPath();
+                        ctx.arc(-4, -2, 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        // Right lens
+                        ctx.beginPath();
+                        ctx.arc(4, -2, 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                        // Bridge
+                        ctx.beginPath();
+                        ctx.moveTo(-1, -2);
+                        ctx.lineTo(1, -2);
+                        ctx.stroke();
+                    }
+                    break;
+
+                case 'headband':
+                    if (layer === 'front') {
+                        // Jock headband
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(-PLAYER_SIZE / 2, -PLAYER_SIZE / 2 + 2, PLAYER_SIZE, 4);
+                        ctx.strokeStyle = '#ef4444';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(-PLAYER_SIZE / 2, -PLAYER_SIZE / 2 + 2, PLAYER_SIZE, 4);
+                    }
+                    break;
+
+                case 'spikes':
+                    if (layer === 'behind') {
+                        // Goth spikes (studded collar effect on top)
+                        ctx.fillStyle = '#9ca3af';
+                        for (let i = -2; i <= 2; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(i * 5, -PLAYER_SIZE / 2 - 2);
+                            ctx.lineTo(i * 5 - 3, -PLAYER_SIZE / 2 + 4);
+                            ctx.lineTo(i * 5 + 3, -PLAYER_SIZE / 2 + 4);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                    }
+                    break;
+
+                case 'beret':
+                    if (layer === 'front') {
+                        // Artist beret
+                        ctx.fillStyle = '#be185d';
+                        ctx.beginPath();
+                        ctx.ellipse(0, -PLAYER_SIZE / 2 + 2, PLAYER_SIZE / 2 + 3, 5, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(0, -PLAYER_SIZE / 2, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'cap':
+                    if (layer === 'front') {
+                        // Skater cap (backwards)
+                        ctx.fillStyle = '#0d9488';
+                        // Cap body
+                        ctx.beginPath();
+                        ctx.arc(0, -PLAYER_SIZE / 2 + 4, PLAYER_SIZE / 2, Math.PI, 0);
+                        ctx.fill();
+                        // Brim (backwards)
+                        ctx.fillStyle = '#115e59';
+                        ctx.fillRect(-4, -PLAYER_SIZE / 2 + 4, 8, 4);
+                    }
+                    break;
+
+                case 'bowtie':
+                    if (layer === 'front') {
+                        // Preppy bowtie
+                        ctx.fillStyle = '#7c3aed';
+                        // Left wing
+                        ctx.beginPath();
+                        ctx.moveTo(0, PLAYER_SIZE / 2 - 6);
+                        ctx.lineTo(-8, PLAYER_SIZE / 2 - 10);
+                        ctx.lineTo(-8, PLAYER_SIZE / 2 - 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        // Right wing
+                        ctx.beginPath();
+                        ctx.moveTo(0, PLAYER_SIZE / 2 - 6);
+                        ctx.lineTo(8, PLAYER_SIZE / 2 - 10);
+                        ctx.lineTo(8, PLAYER_SIZE / 2 - 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        // Center knot
+                        ctx.fillStyle = '#5b21b6';
+                        ctx.beginPath();
+                        ctx.arc(0, PLAYER_SIZE / 2 - 6, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'mohawk':
+                    if (layer === 'behind') {
+                        // Punk mohawk
+                        ctx.fillStyle = '#84cc16';
+                        for (let i = 0; i < 5; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(-6 + i * 3, -PLAYER_SIZE / 2);
+                            ctx.lineTo(-4 + i * 3, -PLAYER_SIZE / 2 - 10 - Math.sin(i) * 3);
+                            ctx.lineTo(-2 + i * 3, -PLAYER_SIZE / 2);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                    }
+                    break;
+            }
         }
 
         function drawParticles() {
@@ -5833,10 +6272,14 @@
         function showMenu(id) {
             document.querySelectorAll('.menu-screen').forEach(m => m.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
+            // Show help button on menu screens
+            document.getElementById('how-to-play-button').style.display = 'flex';
         }
 
         function hideAllMenus() {
             document.querySelectorAll('.menu-screen').forEach(m => m.classList.add('hidden'));
+            // Hide help button during gameplay
+            document.getElementById('how-to-play-button').style.display = 'none';
         }
 
         // ============================================
@@ -6193,6 +6636,14 @@
 
             // Load campaign progress on init
             loadCampaignProgress();
+
+            // Load saved avatar
+            const savedAvatar = localStorage.getItem('schoolEscape_playerAvatar');
+            if (savedAvatar && AVATAR_TYPES.find(a => a.id === savedAvatar)) {
+                settings.playerAvatar = savedAvatar;
+                document.getElementById('avatar-select').value = savedAvatar;
+            }
+            updateAvatarPreview();
 
             // Keyboard input
             document.addEventListener('keydown', (e) => {
