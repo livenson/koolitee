@@ -595,7 +595,6 @@
                     </div>
                     <div class="setting-row" style="justify-content: center; gap: 20px;">
                         <button class="sound-btn" id="sound-toggle" onclick="toggleSound()">🔊 Sound: ON</button>
-                        <button class="sound-btn" id="music-toggle" onclick="toggleMusic()">🎵 Music: ON</button>
                     </div>
                     <div class="setting-row" style="justify-content: center;">
                         <button class="sound-btn" id="events-toggle" onclick="toggleEvents()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🎲 Random Events: OFF</button>
@@ -3225,10 +3224,8 @@
 
         function updateSoundButtons() {
             const soundBtn = document.getElementById('sound-toggle');
-            const musicBtn = document.getElementById('music-toggle');
             const eventsBtn = document.getElementById('events-toggle');
             if (soundBtn) soundBtn.textContent = settings.soundEnabled ? t('soundOn') : t('soundOff');
-            if (musicBtn) musicBtn.textContent = settings.musicEnabled ? t('musicOn') : t('musicOff');
             if (eventsBtn) eventsBtn.textContent = settings.eventsEnabled ? t('eventsOn') : t('eventsOff');
         }
 
