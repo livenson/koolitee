@@ -6226,9 +6226,13 @@
                     }
                 }
 
-                // Use powerups (1, 2, 3)
-                if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') {
-                    const slot = parseInt(e.code.slice(-1)) - 1;
+                // Use powerups (1, 2, 3 or T, Y, U)
+                const powerupKeyMap = {
+                    'Digit1': 0, 'Digit2': 1, 'Digit3': 2,
+                    'KeyT': 0, 'KeyY': 1, 'KeyU': 2
+                };
+                if (e.code in powerupKeyMap) {
+                    const slot = powerupKeyMap[e.code];
                     if (gameState.playerPowerups[slot]) {
                         usePowerup(gameState.playerPowerups[slot]);
                         gameState.playerPowerups[slot] = null;
