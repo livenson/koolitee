@@ -3923,11 +3923,14 @@
             // Place player start
             placePlayer();
 
-            // Place collectibles
-            placeCollectibles(numCollectibles);
+            // Compute reachable tiles from player position
+            const reachable = computeReachableTiles();
 
-            // Place power-ups
-            placePowerups();
+            // Place collectibles (only on reachable tiles)
+            placeCollectibles(numCollectibles, reachable);
+
+            // Place power-ups (only on reachable tiles)
+            placePowerups(reachable);
 
             // Place teachers
             placeTeachers(numTeachers, speedMultiplier);
@@ -4243,6 +4246,46 @@
             }
         }
 
+        // Flood-fill to find all tiles reachable from player position
+        function computeReachableTiles() {
+            const mapW = gameState.mapWidth;
+            const mapH = gameState.mapHeight;
+            const reachable = Array(mapH).fill(null).map(() => Array(mapW).fill(false));
+
+            // Get player tile position
+            const startX = Math.floor(player.x / TILE_SIZE);
+            const startY = Math.floor(player.y / TILE_SIZE);
+
+            // Walkable tiles (player can walk on these)
+            const isWalkable = (tile) => tile === TILES.FLOOR || tile === TILES.WET_FLOOR || tile === TILES.EXIT;
+
+            // BFS flood-fill
+            const queue = [{ x: startX, y: startY }];
+            reachable[startY][startX] = true;
+
+            while (queue.length > 0) {
+                const { x, y } = queue.shift();
+                const directions = [
+                    { dx: 0, dy: -1 },
+                    { dx: 0, dy: 1 },
+                    { dx: -1, dy: 0 },
+                    { dx: 1, dy: 0 }
+                ];
+
+                for (const { dx, dy } of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (nx >= 0 && nx < mapW && ny >= 0 && ny < mapH &&
+                        !reachable[ny][nx] && isWalkable(gameState.map[ny][nx])) {
+                        reachable[ny][nx] = true;
+                        queue.push({ x: nx, y: ny });
+                    }
+                }
+            }
+
+            return reachable;
+        }
+
         function placeExit() {
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
@@ -4273,7 +4316,7 @@
             }
         }
 
-        function placeCollectibles(count) {
+        function placeCollectibles(count, reachable) {
             gameState.collectibles = [];
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
@@ -4286,7 +4329,8 @@
                 const x = Math.floor(Math.random() * (mapW - 2)) + 1;
                 const y = Math.floor(Math.random() * (mapH - 2)) + 1;
 
-                if (gameState.map[y][x] === TILES.FLOOR) {
+                // Only place on floor tiles that are reachable from player start
+                if (gameState.map[y][x] === TILES.FLOOR && reachable[y][x]) {
                     // Check not too close to player
                     const px = player.x / TILE_SIZE;
                     const py = player.y / TILE_SIZE;
@@ -4306,7 +4350,7 @@
             }
         }
 
-        function placePowerups() {
+        function placePowerups(reachable) {
             gameState.powerups = [];
             const mapW = gameState.mapWidth;
             const mapH = gameState.mapHeight;
@@ -4320,7 +4364,8 @@
                 const x = Math.floor(Math.random() * (mapW - 2)) + 1;
                 const y = Math.floor(Math.random() * (mapH - 2)) + 1;
 
-                if (gameState.map[y][x] === TILES.FLOOR) {
+                // Only place on floor tiles that are reachable from player start
+                if (gameState.map[y][x] === TILES.FLOOR && reachable[y][x]) {
                     gameState.powerups.push({
                         id: placed, // ID for multiplayer sync
                         x: x * TILE_SIZE + TILE_SIZE / 2,
