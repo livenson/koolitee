@@ -7,7 +7,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>School Escape - Action Arcade Game</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -184,12 +184,20 @@
             <div class="settings-panel" style="max-width: 500px; text-align: left;">
                 <p style="margin-bottom: 15px;"><strong style="color: #4ade80;">OBJECTIVE:</strong> Collect all pizza slices and reach the exit without getting caught by teachers!</p>
 
-                <p style="margin-bottom: 15px;"><strong style="color: #60a5fa;">CONTROLS:</strong></p>
+                <p style="margin-bottom: 15px;"><strong style="color: #60a5fa;">CONTROLS (Keyboard):</strong></p>
                 <ul style="margin-left: 20px; margin-bottom: 15px;">
                     <li>WASD or Arrow Keys - Move</li>
                     <li>SPACE - Dash (quick burst of speed)</li>
                     <li>1, 2, 3 - Use collected power-ups</li>
                     <li>ESC - Pause game</li>
+                </ul>
+
+                <p style="margin-bottom: 15px;"><strong style="color: #60a5fa;">CONTROLS (Mobile/Touch):</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Left joystick - Move in any direction</li>
+                    <li>Dash button - Quick burst of speed</li>
+                    <li>Power-up button - Use collected power-up</li>
+                    <li>Pause button (top) - Pause game</li>
                 </ul>
 
                 <p style="margin-bottom: 15px;"><strong style="color: #ffd700;">POWER-UPS:</strong></p>
@@ -372,6 +380,31 @@
 
         <!-- Message Popup -->
         <div id="message-popup"></div>
+
+        <!-- Mobile Controls -->
+        <div id="mobile-controls" class="mobile-controls hidden">
+            <!-- Virtual Joystick (left side) -->
+            <div id="joystick-container" class="joystick-container">
+                <div id="joystick-base" class="joystick-base">
+                    <div id="joystick-knob" class="joystick-knob"></div>
+                </div>
+            </div>
+
+            <!-- Action Buttons (right side) -->
+            <div id="action-buttons" class="action-buttons">
+                <button id="mobile-dash-btn" class="mobile-action-btn dash-btn">
+                    <span class="btn-icon">⚡</span>
+                    <span class="btn-label">DASH</span>
+                </button>
+                <button id="mobile-powerup-btn" class="mobile-action-btn powerup-btn">
+                    <span class="btn-icon" id="mobile-powerup-icon">🎒</span>
+                    <span class="btn-label">POWER-UP</span>
+                </button>
+            </div>
+
+            <!-- Pause Button (top right corner) -->
+            <button id="mobile-pause-btn" class="mobile-pause-btn">⏸️</button>
+        </div>
     </div>
 
     <!-- JavaScript Modules -->

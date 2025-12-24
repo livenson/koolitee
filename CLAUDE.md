@@ -134,6 +134,28 @@ The game supports real-time multiplayer using [Liveblocks](https://liveblocks.io
 | `broadcastTeacherPositions()` | multiplayer.js | Host syncs teacher state |
 | `drawOtherPlayers()` | multiplayer.js | Render other players on canvas |
 
+### Mobile Controls System
+
+The game includes touch-friendly controls for mobile devices, automatically detected and shown on touch-capable devices.
+
+**Components:**
+- **Virtual Joystick:** Left side analog stick for 8-directional movement
+- **Dash Button:** Right side button for quick speed burst (shows cooldown state)
+- **Power-up Button:** Right side button to use first available power-up (shows current power-up icon)
+- **Pause Button:** Top-right button to pause/resume game
+
+**Key State:**
+- `mobileInput.active` - Whether mobile controls are being used
+- `mobileInput.joystick.x/y` - Joystick position (-1 to 1 range)
+- `mobileInput.isTouchDevice` - Auto-detected touch device flag
+
+**CSS Classes:**
+- `.mobile-controls` - Main container (hidden on desktop)
+- `.joystick-container/.joystick-base/.joystick-knob` - Virtual joystick
+- `.mobile-action-btn` - Action buttons
+- `.dash-btn.cooldown` - Dash button during cooldown
+- `.powerup-btn.has-powerup/.empty` - Power-up button states
+
 ## Key Functions by Module
 
 ### js/game.js
@@ -150,6 +172,11 @@ The game supports real-time multiplayer using [Liveblocks](https://liveblocks.io
 | `drawMap()` | Render map tiles |
 | `drawPlayer()` | Render player character |
 | `drawTeachers()` | Render teacher enemies |
+| `initMobileControls()` | Initialize touch controls for mobile |
+| `showMobileControls()` | Show mobile controls overlay |
+| `hideMobileControls()` | Hide mobile controls overlay |
+| `updateMobilePowerupButton()` | Update powerup button state/icon |
+| `updateMobileDashButton()` | Update dash button cooldown state |
 
 ### js/map.js
 | Function | Purpose |
