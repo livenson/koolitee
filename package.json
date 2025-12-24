@@ -1,0 +1,19 @@
+{
+  "name": "school-escape",
+  "version": "1.0.0",
+  "description": "Browser-based action arcade game",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:desktop": "playwright test --project=chromium --project=firefox",
+    "serve": "npx serve -l 8080"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "serve": "^14.2.0"
+  },
+  "author": "Ilja Livenson and Mark Livenson",
+  "license": "MIT"
+}

@@ -79,6 +79,13 @@ let teachers = [];
 // Input state
 const keys = {};
 
+// Mobile controls state
+let mobileInput = {
+    active: false,
+    joystick: { x: 0, y: 0 },
+    isTouchDevice: false
+};
+
 // Settings
 let settings = {
     schoolType: 'middle',
@@ -206,6 +213,7 @@ function updateTimers(deltaTime) {
     // Player dash cooldown
     if (player.dashCooldown > 0) {
         player.dashCooldown -= deltaTime;
+        updateMobileDashButton();
     }
 
     // Dash duration
@@ -240,15 +248,21 @@ function updateTimers(deltaTime) {
 }
 
 function updatePlayer(deltaTime) {
-    // Get input
+    // Get input (keyboard)
     let dx = 0, dy = 0;
     if (keys['ArrowLeft'] || keys['KeyA']) dx -= 1;
     if (keys['ArrowRight'] || keys['KeyD']) dx += 1;
     if (keys['ArrowUp'] || keys['KeyW']) dy -= 1;
     if (keys['ArrowDown'] || keys['KeyS']) dy += 1;
 
-    // Normalize diagonal movement
-    if (dx !== 0 && dy !== 0) {
+    // Mobile joystick input (overrides keyboard if active)
+    if (mobileInput.active && (mobileInput.joystick.x !== 0 || mobileInput.joystick.y !== 0)) {
+        dx = mobileInput.joystick.x;
+        dy = mobileInput.joystick.y;
+    }
+
+    // Normalize diagonal movement (only for keyboard, joystick is already normalized)
+    if (!mobileInput.active && dx !== 0 && dy !== 0) {
         dx *= 0.707;
         dy *= 0.707;
     }
@@ -610,6 +624,7 @@ function collectPowerup(powerup) {
     }
 
     updateUI();
+    updateMobilePowerupButton();
 }
 
 function usePowerup(type) {
@@ -687,6 +702,7 @@ function checkWinCondition() {
 function gameOver(won) {
     gameState.running = false;
     stopMusic();
+    hideMobileControls();
 
     playSound(won ? 'win' : 'lose');
 
@@ -2116,6 +2132,237 @@ function startGame() {
     gameState.running = true;
     showMessage(t('escape'));
     playSound('menu_click');
+
+    // Show mobile controls if on touch device
+    if (mobileInput.isTouchDevice) {
+        showMobileControls();
+    }
+}
+
+// ============================================
+// MOBILE CONTROLS
+// ============================================
+
+function initMobileControls() {
+    // Detect touch device
+    mobileInput.isTouchDevice = ('ontouchstart' in window) ||
+                                 (navigator.maxTouchPoints > 0) ||
+                                 (navigator.msMaxTouchPoints > 0);
+
+    // Get DOM elements
+    const joystickContainer = document.getElementById('joystick-container');
+    const joystickBase = document.getElementById('joystick-base');
+    const joystickKnob = document.getElementById('joystick-knob');
+    const dashBtn = document.getElementById('mobile-dash-btn');
+    const powerupBtn = document.getElementById('mobile-powerup-btn');
+    const pauseBtn = document.getElementById('mobile-pause-btn');
+    const mobileControls = document.getElementById('mobile-controls');
+
+    if (!joystickBase || !mobileControls) return;
+
+    // Joystick state
+    let joystickActive = false;
+    let joystickTouchId = null;
+    const baseRadius = 60; // Half of joystick base size
+    const knobRadius = 25; // Half of knob size
+    const maxDistance = baseRadius - knobRadius;
+
+    // Get center of joystick base
+    function getJoystickCenter() {
+        const rect = joystickBase.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+    }
+
+    // Handle joystick touch start
+    function handleJoystickStart(e) {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        joystickTouchId = touch.identifier;
+        joystickActive = true;
+        mobileInput.active = true;
+        joystickKnob.classList.add('active');
+        handleJoystickMove(e);
+    }
+
+    // Handle joystick touch move
+    function handleJoystickMove(e) {
+        if (!joystickActive) return;
+        e.preventDefault();
+
+        let touch = null;
+        for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === joystickTouchId) {
+                touch = e.touches[i];
+                break;
+            }
+        }
+        if (!touch) return;
+
+        const center = getJoystickCenter();
+        let deltaX = touch.clientX - center.x;
+        let deltaY = touch.clientY - center.y;
+
+        // Calculate distance from center
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        // Clamp to max distance
+        if (distance > maxDistance) {
+            deltaX = (deltaX / distance) * maxDistance;
+            deltaY = (deltaY / distance) * maxDistance;
+        }
+
+        // Update knob position
+        joystickKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+        // Normalize to -1 to 1 range
+        mobileInput.joystick.x = deltaX / maxDistance;
+        mobileInput.joystick.y = deltaY / maxDistance;
+    }
+
+    // Handle joystick touch end
+    function handleJoystickEnd(e) {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joystickTouchId) {
+                joystickActive = false;
+                joystickTouchId = null;
+                joystickKnob.classList.remove('active');
+                joystickKnob.style.transform = 'translate(0, 0)';
+                mobileInput.joystick.x = 0;
+                mobileInput.joystick.y = 0;
+                break;
+            }
+        }
+    }
+
+    // Joystick touch events
+    joystickContainer.addEventListener('touchstart', handleJoystickStart, { passive: false });
+    document.addEventListener('touchmove', handleJoystickMove, { passive: false });
+    document.addEventListener('touchend', handleJoystickEnd, { passive: false });
+    document.addEventListener('touchcancel', handleJoystickEnd, { passive: false });
+
+    // Dash button
+    if (dashBtn) {
+        dashBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.running && !gameState.paused) {
+                if (player.dashCooldown <= 0 && !player.isDashing) {
+                    player.isDashing = true;
+                    player.dashTimer = 0.2;
+                    player.dashCooldown = 1;
+                    gameState.screenShake = 3;
+                    playSound('dash');
+                }
+            }
+        }, { passive: false });
+    }
+
+    // Power-up button - cycles through and uses first available powerup
+    if (powerupBtn) {
+        powerupBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.running && !gameState.paused) {
+                // Find first available powerup
+                for (let i = 0; i < gameState.playerPowerups.length; i++) {
+                    if (gameState.playerPowerups[i]) {
+                        usePowerup(gameState.playerPowerups[i]);
+                        gameState.playerPowerups[i] = null;
+                        updateUI();
+                        updateMobilePowerupButton();
+                        break;
+                    }
+                }
+            }
+        }, { passive: false });
+    }
+
+    // Pause button
+    if (pauseBtn) {
+        pauseBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.running) {
+                gameState.paused = !gameState.paused;
+                if (gameState.paused) {
+                    stopMusic();
+                    playSound('menu_click');
+                    showMenu('pause-screen');
+                    hideMobileControls();
+                } else {
+                    playSound('menu_click');
+                    startMusic();
+                    hideAllMenus();
+                    showMobileControls();
+                }
+            }
+        }, { passive: false });
+    }
+
+    // Prevent default touch behavior on controls to avoid scrolling
+    mobileControls.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+}
+
+function showMobileControls() {
+    const mobileControls = document.getElementById('mobile-controls');
+    if (mobileControls && mobileInput.isTouchDevice && gameState.running) {
+        mobileControls.classList.remove('hidden');
+        updateMobilePowerupButton();
+    }
+}
+
+function hideMobileControls() {
+    const mobileControls = document.getElementById('mobile-controls');
+    if (mobileControls) {
+        mobileControls.classList.add('hidden');
+    }
+}
+
+function updateMobilePowerupButton() {
+    const powerupBtn = document.getElementById('mobile-powerup-btn');
+    const powerupIcon = document.getElementById('mobile-powerup-icon');
+    if (!powerupBtn || !powerupIcon) return;
+
+    // Find first available powerup
+    let hasPowerup = false;
+    let powerupType = null;
+    for (let i = 0; i < gameState.playerPowerups.length; i++) {
+        if (gameState.playerPowerups[i]) {
+            hasPowerup = true;
+            powerupType = gameState.playerPowerups[i];
+            break;
+        }
+    }
+
+    if (hasPowerup) {
+        powerupBtn.classList.add('has-powerup');
+        powerupBtn.classList.remove('empty');
+        // Set icon based on powerup type
+        const icons = {
+            'hallpass': '📜',
+            'energydrink': '⚡',
+            'stinkbomb': '💨',
+            'skateboard': '🛹'
+        };
+        powerupIcon.textContent = icons[powerupType] || '🎒';
+    } else {
+        powerupBtn.classList.remove('has-powerup');
+        powerupBtn.classList.add('empty');
+        powerupIcon.textContent = '🎒';
+    }
+}
+
+function updateMobileDashButton() {
+    const dashBtn = document.getElementById('mobile-dash-btn');
+    if (!dashBtn) return;
+
+    if (player.dashCooldown > 0) {
+        dashBtn.classList.add('cooldown');
+    } else {
+        dashBtn.classList.remove('cooldown');
+    }
 }
 
 function init() {
@@ -2374,6 +2621,9 @@ function init() {
     document.addEventListener('keyup', (e) => {
         keys[e.code] = false;
     });
+
+    // Initialize mobile controls
+    initMobileControls();
 
     // Initialize language
     updateLanguage();

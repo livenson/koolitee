@@ -512,3 +512,250 @@ body {
 .mp-player-hud-lives {
     color: #ff6b6b;
 }
+
+/* ============================================
+   MOBILE CONTROLS
+   ============================================ */
+
+.mobile-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 90;
+}
+
+.mobile-controls.hidden {
+    display: none;
+}
+
+/* Virtual Joystick */
+.joystick-container {
+    position: absolute;
+    bottom: 80px;
+    left: 30px;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+.joystick-base {
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.joystick-knob {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(145deg, #667eea, #764ba2);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: transform 0.05s ease-out;
+    position: absolute;
+}
+
+.joystick-knob.active {
+    background: linear-gradient(145deg, #8b9cf5, #9165c7);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Action Buttons */
+.action-buttons {
+    position: absolute;
+    bottom: 80px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    pointer-events: auto;
+}
+
+.mobile-action-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.mobile-action-btn:active {
+    transform: scale(0.9);
+}
+
+.mobile-action-btn .btn-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.mobile-action-btn .btn-label {
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    margin-top: 2px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Dash Button */
+.dash-btn {
+    background: linear-gradient(145deg, #3b82f6, #2563eb);
+}
+
+.dash-btn:active {
+    background: linear-gradient(145deg, #60a5fa, #3b82f6);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
+}
+
+.dash-btn.cooldown {
+    background: linear-gradient(145deg, #6b7280, #4b5563);
+    opacity: 0.6;
+}
+
+/* Power-up Button */
+.powerup-btn {
+    background: linear-gradient(145deg, #f59e0b, #d97706);
+}
+
+.powerup-btn:active {
+    background: linear-gradient(145deg, #fbbf24, #f59e0b);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.7);
+}
+
+.powerup-btn.has-powerup {
+    animation: powerup-glow 1s ease-in-out infinite alternate;
+}
+
+.powerup-btn.empty {
+    background: linear-gradient(145deg, #6b7280, #4b5563);
+    opacity: 0.5;
+}
+
+@keyframes powerup-glow {
+    from { box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4); }
+    to { box-shadow: 0 4px 30px rgba(245, 158, 11, 0.8); }
+}
+
+/* Pause Button */
+.mobile-pause-btn {
+    position: absolute;
+    top: 15px;
+    right: 70px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    font-size: 20px;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s;
+}
+
+.mobile-pause-btn:active {
+    transform: scale(0.9);
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 900px) and (pointer: coarse) {
+    #game-footer {
+        display: none;
+    }
+
+    #game-header {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+
+    #score-display {
+        font-size: 18px;
+    }
+
+    #powerup-display {
+        display: none;
+    }
+
+    .powerup-slot {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    #minimap {
+        bottom: 200px;
+        opacity: 0.6;
+        transform: scale(0.8);
+        transform-origin: bottom right;
+    }
+}
+
+/* Landscape mobile adjustments */
+@media (max-height: 500px) and (pointer: coarse) {
+    .joystick-container {
+        bottom: 20px;
+        left: 20px;
+    }
+
+    .joystick-base {
+        width: 100px;
+        height: 100px;
+    }
+
+    .joystick-knob {
+        width: 40px;
+        height: 40px;
+    }
+
+    .action-buttons {
+        bottom: 20px;
+        right: 20px;
+        flex-direction: row;
+    }
+
+    .mobile-action-btn {
+        width: 65px;
+        height: 65px;
+    }
+
+    .mobile-action-btn .btn-icon {
+        font-size: 22px;
+    }
+
+    .mobile-action-btn .btn-label {
+        font-size: 8px;
+    }
+
+    .mobile-pause-btn {
+        top: 10px;
+        right: 60px;
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    #minimap {
+        bottom: 130px;
+        transform: scale(0.6);
+    }
+}
