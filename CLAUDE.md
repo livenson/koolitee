@@ -2,44 +2,51 @@
 
 ## Project Overview
 
-**School Escape** is a browser-based action arcade game where players control a student trying to escape from teachers in a procedurally generated school building. The game is built entirely with vanilla HTML5, CSS3, and JavaScript in a single file.
+**School Escape** is a browser-based action arcade game where players control a student trying to escape from teachers in a procedurally generated school building. The game is built with vanilla HTML5, CSS3, and JavaScript using a modular file structure.
 
 **Copyright:** Ilja Livenson and Mark Livenson (2025)
 **License:** MIT
 
 ## Architecture
 
-### Single-File Structure
-
-The entire game is contained in `index.html` (~4200 lines):
-- **Lines 1-316:** HTML structure and CSS styling
-- **Lines 317-493:** HTML menu screens and UI elements
-- **Lines 495-4226:** JavaScript game logic
-
-### Key Components
+### Modular File Structure
 
 ```
-index.html
-├── CSS Styles (lines 12-316)
-│   ├── Layout & UI components
-│   ├── Menu screens
-│   ├── Game HUD
-│   └── Animations
-├── HTML Structure (lines 318-493)
-│   ├── Game canvas (800x600)
-│   ├── Minimap canvas (150x112)
-│   ├── Main menu
-│   ├── Settings panels
-│   └── Game screens (pause, game over, level complete)
-└── JavaScript (lines 495-4226)
-    ├── Constants & Game State
-    ├── Translations (5 languages)
-    ├── Audio System (Web Audio API)
-    ├── Random Events System
-    ├── Map Generation
-    ├── Game Logic (update, render)
-    └── UI Management
+/
+├── index.html              # HTML structure only (~385 lines)
+├── css/
+│   └── styles.css          # All CSS styles (~520 lines)
+└── js/
+    ├── game.js             # Main game logic, constants, rendering (~2200 lines)
+    ├── translations.js     # Language strings for 5 languages (~900 lines)
+    ├── audio.js            # Web Audio API sound system (~250 lines)
+    ├── map.js              # Procedural map generation (~550 lines)
+    ├── multiplayer.js      # Liveblocks real-time integration (~750 lines)
+    └── ui.js               # UI management and menus (~550 lines)
 ```
+
+### Module Responsibilities
+
+| File | Purpose |
+|------|---------|
+| `index.html` | HTML structure, canvas elements, menu screens, script loading |
+| `css/styles.css` | Layout, UI components, menu screens, HUD, animations |
+| `js/game.js` | Constants, game state, player/teacher objects, LEVELS, RANDOM_EVENTS, game loop, update functions, collision detection, rendering, initialization |
+| `js/translations.js` | Translation strings object, `t()` helper function |
+| `js/audio.js` | Web Audio API setup, sound effects, background music |
+| `js/map.js` | Map generation with grid/labyrinth/open-plan topologies, room placement, obstacle generation |
+| `js/multiplayer.js` | Liveblocks client, room management, state synchronization, player rendering |
+| `js/ui.js` | Menu management, language switching, avatar preview, campaign progress |
+
+### Script Loading Order
+
+Scripts are loaded in this order (defined in `index.html`):
+1. `js/game.js` - Defines core state and constants
+2. `js/translations.js` - Translation system
+3. `js/audio.js` - Audio system
+4. `js/multiplayer.js` - Multiplayer integration
+5. `js/map.js` - Map generation
+6. `js/ui.js` - UI functions
 
 ## Core Systems
 
@@ -48,7 +55,7 @@ index.html
 2. **Free Play Mode:** Customizable difficulty settings
 3. **Multiplayer Mode:** Real-time cooperative play with 2-8 players
 
-### Level Configuration (LEVELS array, line ~598)
+### Level Configuration (`js/game.js` - LEVELS array)
 Each level defines:
 - `mapSize: { w, h }` - Map dimensions
 - `teachers` - Number of enemies
@@ -56,14 +63,14 @@ Each level defines:
 - `collectibles` - Items to collect
 - `schoolType` - Affects room/obstacle generation
 
-### Map Generation Pipeline (line ~2344)
+### Map Generation Pipeline (`js/map.js`)
 ```
 generateMap() → generateCorridors() → generateRooms() → addObstacles()
              → placeExit() → placePlayer() → placeCollectibles()
              → placePowerups() → placeTeachers()
 ```
 
-### Tile Types (TILES constant, line ~511)
+### Tile Types (`js/game.js` - TILES constant)
 - `FLOOR (0)` - Walkable
 - `WALL (1)` - Solid boundary
 - `DESK (2)` - Obstacle in classrooms
@@ -72,7 +79,7 @@ generateMap() → generateCorridors() → generateRooms() → addObstacles()
 - `EXIT (5)` - Level exit (green when unlocked)
 - `DOOR (6)` - Room entrance
 
-### Teacher AI Types (line ~2649)
+### Teacher AI Types (`js/map.js` - createTeacher())
 - **Patrol:** Follows predefined routes
 - **Hunter:** Actively chases player when in sight
 - **Fast:** Quicker but predictable movement
@@ -85,8 +92,8 @@ generateMap() → generateCorridors() → generateRooms() → addObstacles()
 | Stink Bomb | Stuns teachers | 4 seconds |
 | Skateboard | Speed boost | 10 seconds |
 
-### Random Events (12 events, line ~578)
-Events like UFO Abduction, Dinosaur Stampede, Power Outage, etc. that temporarily modify gameplay.
+### Random Events (`js/game.js` - RANDOM_EVENTS array)
+12 events including UFO Abduction, Dinosaur Stampede, Power Outage, etc. that temporarily modify gameplay.
 
 ### Multiplayer System
 
@@ -97,9 +104,11 @@ The game supports real-time multiplayer using [Liveblocks](https://liveblocks.io
 - **Map Synchronization:** Host generates the map and broadcasts complete map data to guests
 - **State Sync:** Player positions, collectibles, powerups, and teacher positions are synchronized
 
-**Key Components:**
+**Key Components (`js/multiplayer.js`):**
 - `mpState` - Multiplayer state object (room, players, host status)
 - `liveblocksClient` - Liveblocks client for real-time sync
+- `PLAYER_COLORS` - 8 predefined colors for multiplayer players
+- `AVATAR_TYPES` - Player avatar configurations
 - Room codes: 3-character alphanumeric (e.g., "A7K")
 
 **Synchronization Flow:**
@@ -113,59 +122,101 @@ The game supports real-time multiplayer using [Liveblocks](https://liveblocks.io
    - Stink bomb effects sync to all players
 
 **Key Functions:**
+| Function | File | Purpose |
+|----------|------|---------|
+| `initLiveblocks()` | multiplayer.js | Initialize Liveblocks client from CDN |
+| `createMultiplayerRoom()` | multiplayer.js | Create room and become host |
+| `joinMultiplayerRoom()` | multiplayer.js | Join existing room as guest |
+| `hostStartGame()` | multiplayer.js | Generate map and broadcast to guests |
+| `serializeMapData()` | multiplayer.js | Package map data for transmission |
+| `applyMapData()` | multiplayer.js | Apply received map data on guest |
+| `updateMyPresence()` | multiplayer.js | Broadcast local player position |
+| `broadcastTeacherPositions()` | multiplayer.js | Host syncs teacher state |
+| `drawOtherPlayers()` | multiplayer.js | Render other players on canvas |
+
+## Key Functions by Module
+
+### js/game.js
 | Function | Purpose |
 |----------|---------|
-| `initLiveblocks()` | Initialize Liveblocks client from CDN |
-| `hostCreateRoom()` | Create room and become host |
-| `guestJoinRoom()` | Join existing room as guest |
-| `hostStartGame()` | Generate map and broadcast to guests |
-| `serializeMapData()` | Package map data for transmission |
-| `applyMapData()` | Apply received map data on guest |
-| `updateMyPresence()` | Broadcast local player position |
-| `broadcastTeacherPositions()` | Host syncs teacher state |
-| `drawOtherPlayers()` | Render other players on canvas |
+| `init()` | Initialize game, set up event listeners |
+| `startGame()` | Start new game/level |
+| `update(deltaTime)` | Main game logic update |
+| `render()` | Canvas rendering |
+| `gameLoop(timestamp)` | RequestAnimationFrame loop |
+| `updatePlayer(deltaTime)` | Player movement & input |
+| `updateTeachers(deltaTime)` | Enemy AI |
+| `checkCollisions()` | Collision detection |
+| `drawMap()` | Render map tiles |
+| `drawPlayer()` | Render player character |
+| `drawTeachers()` | Render teacher enemies |
 
-**Player Colors:** 8 predefined colors for multiplayer players (defined in `PLAYER_COLORS` array)
+### js/map.js
+| Function | Purpose |
+|----------|---------|
+| `generateMap()` | Main procedural map generation |
+| `generateCorridors()` | Create corridor network |
+| `generateGridCorridors()` | Grid topology corridors |
+| `generateLabyrinth()` | Maze topology corridors |
+| `generateOpenPlan()` | Open plan topology |
+| `generateRooms()` | Add rooms to map |
+| `placeTeachers()` | Spawn teacher entities |
+| `createTeacher()` | Create teacher with AI type |
 
-## Key Functions
+### js/audio.js
+| Function | Purpose |
+|----------|---------|
+| `initAudio()` | Initialize Web Audio context |
+| `playSound(type)` | Play sound effect |
+| `playTone()` | Generate tone sound |
+| `playSweep()` | Generate frequency sweep |
+| `playNoise()` | Generate noise burst |
+| `startMusic()` | Start background music |
+| `stopMusic()` | Stop background music |
 
-| Function | Line | Purpose |
-|----------|------|---------|
-| `init()` | ~4055 | Initialize game, set up event listeners |
-| `startGame()` | ~3990 | Start new game/level |
-| `generateMap()` | ~2344 | Procedural map generation |
-| `update(deltaTime)` | ~2700 | Main game logic update |
-| `render()` | ~3300 | Canvas rendering |
-| `gameLoop(timestamp)` | ~3981 | RequestAnimationFrame loop |
-| `updatePlayer(deltaTime)` | ~2779 | Player movement & input |
-| `updateTeachers(deltaTime)` | ~2848 | Enemy AI |
-| `checkCollisions()` | ~3014 | Collision detection |
-| `playSound(type)` | ~1435 | Web Audio sound effects |
+### js/ui.js
+| Function | Purpose |
+|----------|---------|
+| `updateUI()` | Update HUD elements |
+| `showMessage()` | Display popup message |
+| `showMenu()` | Show specific menu screen |
+| `hideAllMenus()` | Hide all menu screens |
+| `updateLanguage()` | Apply language to UI |
+| `setLanguage()` | Change current language |
+| `updateAvatarPreview()` | Render avatar in preview canvas |
+
+### js/translations.js
+| Function | Purpose |
+|----------|---------|
+| `t(key)` | Get translated string for key |
 
 ## Localization
 
-The game supports 5 languages via the `translations` object (line ~632):
+The game supports 5 languages via the `translations` object in `js/translations.js`:
 - English (`en`)
 - Estonian (`et`)
 - Latvian (`lv`)
 - Lithuanian (`lt`)
 - Russian (`ru`)
 
-Helper: `t(key)` function (line ~1323) returns translated string.
+Helper: `t(key)` function returns translated string.
 
 ## State Management
 
-### Global State Objects
-- `gameState` (line ~522) - Core game state (score, lives, map, particles)
-- `player` (line ~543) - Player position, velocity, power-up status
-- `teachers` (line ~561) - Array of teacher entities
-- `settings` (line ~567) - User preferences
-- `currentEvent` / `eventTimer` (line ~593) - Random event tracking
+### Global State Objects (js/game.js)
+- `gameState` - Core game state (score, lives, map, particles)
+- `player` - Player position, velocity, power-up status
+- `teachers` - Array of teacher entities
+- `settings` - User preferences
+- `currentEvent` / `eventTimer` - Random event tracking
+- `gameMode` - Current game mode (campaign/freeplay/multiplayer)
+- `currentLevel` - Current campaign level index
 
 ### Persistence
 Campaign progress saved to `localStorage`:
-- `schoolEscapeCampaignLevel` - Current level index
-- `schoolEscapeTotalScore` - Accumulated score
+- `schoolEscape_currentLevel` - Current level index
+- `schoolEscape_totalScore` - Accumulated score
+- `schoolEscape_playerAvatar` - Selected avatar
 
 ## Development Guidelines
 
@@ -175,36 +226,37 @@ Simply open `index.html` in any modern browser. No build process or dependencies
 ### Adding New Features
 
 **New Power-up:**
-1. Add to `powerupTypes` array in `placePowerups()` (~2597)
-2. Add handling in `collectPowerup()` (~3083) and `usePowerup()` (~3106)
-3. Add icon in `drawPowerups()` (~3479)
-4. Add translation keys for all 5 languages
+1. Add to `powerupTypes` array in `placePowerups()` in `js/map.js`
+2. Add handling in `collectPowerup()` and `usePowerup()` in `js/game.js`
+3. Add icon in `drawPowerups()` in `js/game.js`
+4. Add translation keys in `js/translations.js` for all 5 languages
 
 **New Teacher Type:**
-1. Add type in `createTeacher()` (~2649)
-2. Implement behavior in `updateTeachers()` (~2848)
-3. Add drawing in `drawTeachers()` (~3532)
-4. Add translation for label
+1. Add type in `createTeacher()` in `js/map.js`
+2. Implement behavior in `updateTeachers()` in `js/game.js`
+3. Add drawing in `drawTeachers()` in `js/game.js`
+4. Add translation for label in `js/translations.js`
 
 **New Random Event:**
-1. Add to `RANDOM_EVENTS` array (~578)
-2. Initialize state in `initEventState()` (~1752)
-3. Update in `updateCurrentEvent()` (~1870)
-4. Handle entities in `updateEventEntities()` (~1896)
-5. End in `endCurrentEvent()` (~2104)
-6. Add translations for event name
+1. Add to `RANDOM_EVENTS` array in `js/game.js`
+2. Initialize state in `initEventState()` in `js/game.js`
+3. Update in `updateCurrentEvent()` in `js/game.js`
+4. Handle entities in `updateEventEntities()` in `js/game.js`
+5. End in `endCurrentEvent()` in `js/game.js`
+6. Add translations for event name in `js/translations.js`
 
 **New Language:**
-1. Add language option to HTML select (~397)
-2. Add complete translation object in `translations` (~632)
+1. Add language option to HTML select in `index.html`
+2. Add complete translation object in `js/translations.js`
 3. Ensure all keys match existing languages
 
 ### Code Style
 - Vanilla JavaScript (ES6+)
-- No external dependencies
+- No external dependencies (except Liveblocks CDN for multiplayer)
 - Canvas-based rendering with 2D context
 - Web Audio API for sounds
 - requestAnimationFrame for game loop
+- Global functions and variables (no module system)
 
 ### Testing
 Manual testing in browser. Check:
@@ -226,11 +278,18 @@ Manual testing in browser. Check:
 ## Common Modifications
 
 ### Adjusting Difficulty
-Modify the `LEVELS` array (~598) to change:
+Modify the `LEVELS` array in `js/game.js` to change:
 - Map size, teacher count, speed multiplier, collectible count
 
 ### Changing Canvas Size
-Update canvas element attributes (line ~333) and adjust camera calculations in `updateCamera()` (~3280).
+Update canvas element attributes in `index.html` and adjust camera calculations in `updateCamera()` in `js/game.js`.
 
 ### Adding Sound Effects
-Use `playTone()` (~1527), `playSweep()` (~1548), or `playNoise()` (~1568) in the `playSound()` function.
+Use `playTone()`, `playSweep()`, or `playNoise()` in the `playSound()` function in `js/audio.js`.
+
+### Adding CSS Styles
+Add new styles to `css/styles.css`. Key class prefixes:
+- `.menu-` - Menu screens
+- `.settings-` - Settings panels
+- `.player-` - Multiplayer player elements
+- `.mp-` - Multiplayer HUD elements
