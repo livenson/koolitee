@@ -2412,6 +2412,7 @@ function init() {
         gameState.paused = false;
         hideAllMenus();
         startMusic();
+        showMobileControls();
     });
     document.getElementById('quit-button').addEventListener('click', () => {
         playSound('menu_click');
