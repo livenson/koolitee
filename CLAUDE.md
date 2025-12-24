@@ -286,7 +286,42 @@ Simply open `index.html` in any modern browser. No build process or dependencies
 - Global functions and variables (no module system)
 
 ### Testing
-Manual testing in browser. Check:
+
+**Automated Testing (Playwright):**
+```bash
+# Install dependencies
+npm install
+
+# Run all tests
+npm test
+
+# Run tests with browser visible
+npm run test:headed
+
+# Run only mobile tests
+npm run test:mobile
+
+# Run only desktop tests
+npm run test:desktop
+
+# Debug tests
+npm run test:debug
+```
+
+**Test Files:**
+- `tests/game-init.spec.js` - Game initialization, menus, settings
+- `tests/game-play.spec.js` - Game modes, keyboard controls, game state
+- `tests/mobile.spec.js` - Mobile controls, touch events (runs on mobile emulation)
+- `tests/responsive.spec.js` - Viewport sizes, fullscreen, responsive layout
+
+**CI/CD:**
+Tests run automatically via GitHub Actions on push/PR to main branch.
+- Runs on desktop browsers (Chromium, Firefox, WebKit)
+- Runs on mobile emulation (Pixel 5, iPhone 12, iPad)
+- Uploads test reports and screenshots on failure
+
+**Manual Testing:**
+For features not covered by automated tests:
 - All game modes work
 - Language switching functions correctly
 - Audio toggles work
