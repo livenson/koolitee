@@ -66,12 +66,15 @@ test.describe('Viewport Sizes', () => {
     const mainMenu = page.locator('#main-menu');
     await expect(mainMenu).toBeVisible();
 
-    // Canvas should be visible and at expected size
+    // Canvas should be visible and at expected size (check element attributes, not bounding box)
     const canvas = page.locator('#game-canvas');
     await expect(canvas).toBeVisible();
-    const box = await canvas.boundingBox();
-    expect(box?.width).toBe(800);
-    expect(box?.height).toBe(600);
+    const dimensions = await canvas.evaluate((el) => ({
+      width: el.width,
+      height: el.height
+    }));
+    expect(dimensions.width).toBe(800);
+    expect(dimensions.height).toBe(600);
   });
 
   test('should handle landscape mobile viewport', async ({ page }) => {
@@ -107,13 +110,14 @@ test.describe('Fullscreen Behavior', () => {
       return {
         display: styles.display,
         overflow: styles.overflow,
-        minHeight: styles.minHeight,
+        // minHeight gets computed to pixels, so check it covers viewport
+        minHeightCoversViewport: parseInt(styles.minHeight) >= window.innerHeight,
       };
     });
 
     expect(bodyStyles.display).toBe('flex');
     expect(bodyStyles.overflow).toBe('hidden');
-    expect(bodyStyles.minHeight).toBe('100vh');
+    expect(bodyStyles.minHeightCoversViewport).toBe(true);
   });
 
   test('should have correct viewport meta tag', async ({ page }) => {
@@ -153,17 +157,21 @@ test.describe('Menu Screens Visibility', () => {
   test('menu screens should cover full viewport', async ({ page }) => {
     const menuStyles = await page.evaluate(() => {
       const menu = document.getElementById('main-menu');
+      const parent = menu.parentElement;
       const styles = window.getComputedStyle(menu);
+      const parentRect = parent.getBoundingClientRect();
+      const menuRect = menu.getBoundingClientRect();
       return {
         position: styles.position,
-        width: styles.width,
-        height: styles.height,
+        // Check if menu covers its parent container
+        coversParentWidth: menuRect.width >= parentRect.width * 0.99,
+        coversParentHeight: menuRect.height >= parentRect.height * 0.99,
       };
     });
 
     expect(menuStyles.position).toBe('absolute');
-    expect(menuStyles.width).toBe('100%');
-    expect(menuStyles.height).toBe('100%');
+    expect(menuStyles.coversParentWidth).toBe(true);
+    expect(menuStyles.coversParentHeight).toBe(true);
   });
 
   test('all menu screens should have same base styling', async ({ page }) => {

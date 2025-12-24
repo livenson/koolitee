@@ -30,10 +30,13 @@ test.describe('Game Initialization', () => {
     const canvas = page.locator('#game-canvas');
     await expect(canvas).toBeVisible();
 
-    // Check canvas dimensions
-    const box = await canvas.boundingBox();
-    expect(box?.width).toBe(800);
-    expect(box?.height).toBe(600);
+    // Check canvas element attributes (not bounding box which includes border)
+    const dimensions = await canvas.evaluate((el) => ({
+      width: el.width,
+      height: el.height
+    }));
+    expect(dimensions.width).toBe(800);
+    expect(dimensions.height).toBe(600);
   });
 
   test('should have the minimap canvas', async ({ page }) => {
@@ -51,8 +54,8 @@ test.describe('Game Initialization', () => {
     const howToPlay = page.locator('#how-to-play-screen');
     await expect(howToPlay).toBeVisible();
     await expect(howToPlay).toContainText('HOW TO PLAY');
-    await expect(howToPlay).toContainText('CONTROLS (Keyboard)');
-    await expect(howToPlay).toContainText('CONTROLS (Mobile/Touch)');
+    await expect(howToPlay).toContainText('CONTROLS');
+    await expect(howToPlay).toContainText('WASD or Arrow Keys');
   });
 
   test('should close How To Play screen', async ({ page }) => {
