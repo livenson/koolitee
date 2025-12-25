@@ -162,7 +162,7 @@ let settings = {
     language: 'en',
     eventsEnabled: false,
     playerAvatar: 'default',
-    mapTopology: 'grid',
+    mapTopology: 'labyrinth',
     corridorDensity: 'medium',
     roomDensity: 'normal'
 };
