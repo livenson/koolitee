@@ -30,13 +30,14 @@ test.describe('Game Initialization', () => {
     const canvas = page.locator('#game-canvas');
     await expect(canvas).toBeVisible();
 
-    // Check canvas element attributes (not bounding box which includes border)
+    // Check canvas element has valid dimensions (dynamic based on viewport)
     const dimensions = await canvas.evaluate((el) => ({
       width: el.width,
       height: el.height
     }));
-    expect(dimensions.width).toBe(800);
-    expect(dimensions.height).toBe(600);
+    // Canvas should have positive dimensions (size varies by device)
+    expect(dimensions.width).toBeGreaterThan(0);
+    expect(dimensions.height).toBeGreaterThan(0);
   });
 
   test('should have the minimap canvas', async ({ page }) => {

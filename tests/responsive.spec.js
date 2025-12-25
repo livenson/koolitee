@@ -66,15 +66,16 @@ test.describe('Viewport Sizes', () => {
     const mainMenu = page.locator('#main-menu');
     await expect(mainMenu).toBeVisible();
 
-    // Canvas should be visible and at expected size (check element attributes, not bounding box)
+    // Canvas should be visible with valid dimensions (dynamic sizing based on viewport)
     const canvas = page.locator('#game-canvas');
     await expect(canvas).toBeVisible();
     const dimensions = await canvas.evaluate((el) => ({
       width: el.width,
       height: el.height
     }));
-    expect(dimensions.width).toBe(800);
-    expect(dimensions.height).toBe(600);
+    // On large desktop viewport, canvas should have substantial size
+    expect(dimensions.width).toBeGreaterThanOrEqual(800);
+    expect(dimensions.height).toBeGreaterThanOrEqual(600);
   });
 
   test('should handle landscape mobile viewport', async ({ page }) => {

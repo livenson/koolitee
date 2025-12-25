@@ -158,6 +158,9 @@ body {
     justify-content: center;
     z-index: 100;
     color: white;
+    overflow-y: auto;
+    padding: 20px 10px;
+    box-sizing: border-box;
 }
 
 .menu-screen.hidden {
@@ -284,6 +287,25 @@ body {
     font-size: 48px;
     color: #ffd700;
     margin-bottom: 30px;
+}
+
+/* How to Play screen - ensure scrollable on mobile */
+#how-to-play-screen {
+    justify-content: flex-start;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+#how-to-play-screen .settings-panel {
+    max-height: none;
+    overflow: visible;
+    margin-bottom: 20px;
+}
+
+#how-to-play-screen .menu-button {
+    flex-shrink: 0;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
 /* Message popup - non-intrusive notification at top */
