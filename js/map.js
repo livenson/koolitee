@@ -360,27 +360,123 @@ function generateRooms(roomChance, roomDensity) {
 function placeBreakableWalls() {
     const mapW = gameState.mapWidth;
     const mapH = gameState.mapHeight;
-    const breakableChance = 0.08; // 8% of eligible walls become breakable
+    const breakableChance = 0.15; // Higher chance since we're more selective
 
-    for (let y = 2; y < mapH - 2; y++) {
-        for (let x = 2; x < mapW - 2; x++) {
+    // Get player spawn position for distance check
+    const playerTileX = Math.floor(player.x / TILE_SIZE);
+    const playerTileY = Math.floor(player.y / TILE_SIZE);
+
+    // Find exit position
+    let exitX = mapW - 2, exitY = Math.floor(mapH / 2);
+    for (let y = 0; y < mapH; y++) {
+        for (let x = 0; x < mapW; x++) {
+            if (gameState.map[y][x] === TILES.EXIT) {
+                exitX = x;
+                exitY = y;
+            }
+        }
+    }
+
+    // Collect candidate walls that would create meaningful shortcuts
+    const candidates = [];
+
+    for (let y = 3; y < mapH - 3; y++) {
+        for (let x = 3; x < mapW - 3; x++) {
             if (gameState.map[y][x] !== TILES.WALL) continue;
 
-            // Check if this wall creates a potential shortcut
-            // It must have floor on opposite sides (horizontal or vertical)
+            // Skip walls too close to player spawn or exit
+            const distToPlayer = Math.abs(x - playerTileX) + Math.abs(y - playerTileY);
+            const distToExit = Math.abs(x - exitX) + Math.abs(y - exitY);
+            if (distToPlayer < 6 || distToExit < 4) continue;
+
+            // Check for horizontal shortcut (wall with floor on left and right)
             const hasHorizontalShortcut =
                 gameState.map[y][x - 1] === TILES.FLOOR &&
                 gameState.map[y][x + 1] === TILES.FLOOR;
+
+            // Check for vertical shortcut (wall with floor above and below)
             const hasVerticalShortcut =
                 gameState.map[y - 1][x] === TILES.FLOOR &&
                 gameState.map[y + 1][x] === TILES.FLOOR;
 
-            if ((hasHorizontalShortcut || hasVerticalShortcut) && Math.random() < breakableChance) {
-                // Don't place breakable walls at map edges
-                if (x > 2 && x < mapW - 3 && y > 2 && y < mapH - 3) {
-                    gameState.map[y][x] = TILES.BREAKABLE_WALL;
+            if (!hasHorizontalShortcut && !hasVerticalShortcut) continue;
+
+            // For a meaningful shortcut, the wall should be part of a larger wall structure
+            // Count walls in perpendicular direction to ensure it's a proper barrier
+            let wallScore = 0;
+
+            if (hasHorizontalShortcut) {
+                // For horizontal shortcut, check wall extends vertically (proper room/corridor wall)
+                let wallAbove = 0, wallBelow = 0;
+                for (let dy = 1; dy <= 3; dy++) {
+                    if (y - dy >= 0 && gameState.map[y - dy][x] === TILES.WALL) wallAbove++;
+                    if (y + dy < mapH && gameState.map[y + dy][x] === TILES.WALL) wallBelow++;
                 }
+                wallScore = wallAbove + wallBelow;
+
+                // Also verify the floors on each side aren't already connected nearby
+                // Check if there's an open path within 2 tiles above or below
+                let hasNearbyPath = false;
+                for (let dy = -2; dy <= 2; dy++) {
+                    if (dy === 0) continue;
+                    const checkY = y + dy;
+                    if (checkY > 0 && checkY < mapH - 1) {
+                        if (gameState.map[checkY][x] === TILES.FLOOR &&
+                            gameState.map[checkY][x - 1] === TILES.FLOOR &&
+                            gameState.map[checkY][x + 1] === TILES.FLOOR) {
+                            hasNearbyPath = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasNearbyPath) wallScore = 0; // Not a meaningful shortcut
             }
+
+            if (hasVerticalShortcut) {
+                // For vertical shortcut, check wall extends horizontally
+                let wallLeft = 0, wallRight = 0;
+                for (let dx = 1; dx <= 3; dx++) {
+                    if (x - dx >= 0 && gameState.map[y][x - dx] === TILES.WALL) wallLeft++;
+                    if (x + dx < mapW && gameState.map[y][x + dx] === TILES.WALL) wallRight++;
+                }
+                wallScore = Math.max(wallScore, wallLeft + wallRight);
+
+                // Check if there's an open path within 2 tiles left or right
+                let hasNearbyPath = false;
+                for (let dx = -2; dx <= 2; dx++) {
+                    if (dx === 0) continue;
+                    const checkX = x + dx;
+                    if (checkX > 0 && checkX < mapW - 1) {
+                        if (gameState.map[y][checkX] === TILES.FLOOR &&
+                            gameState.map[y - 1][checkX] === TILES.FLOOR &&
+                            gameState.map[y + 1][checkX] === TILES.FLOOR) {
+                            hasNearbyPath = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasNearbyPath) wallScore = 0;
+            }
+
+            // Only consider walls that are part of a meaningful barrier (2+ connected walls)
+            if (wallScore >= 2) {
+                candidates.push({ x, y, score: wallScore });
+            }
+        }
+    }
+
+    // Sort by score (prefer walls that are part of larger structures)
+    candidates.sort((a, b) => b.score - a.score);
+
+    // Place breakable walls with some randomness, limiting total count
+    const maxBreakable = Math.max(3, Math.floor(mapW * mapH / 150));
+    let placed = 0;
+
+    for (const candidate of candidates) {
+        if (placed >= maxBreakable) break;
+        if (Math.random() < breakableChance) {
+            gameState.map[candidate.y][candidate.x] = TILES.BREAKABLE_WALL;
+            placed++;
         }
     }
 }
