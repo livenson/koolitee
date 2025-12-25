@@ -25,7 +25,8 @@ const TILES = {
     LOCKER: 3,
     WET_FLOOR: 4,
     EXIT: 5,
-    DOOR: 6
+    DOOR: 6,
+    BREAKABLE_WALL: 7
 };
 
 // ============================================
@@ -361,11 +362,29 @@ function updatePlayer(deltaTime) {
         player.x = Math.max(PLAYER_SIZE, Math.min(newX, gameState.mapWidth * TILE_SIZE - PLAYER_SIZE));
         player.y = Math.max(PLAYER_SIZE, Math.min(newY, gameState.mapHeight * TILE_SIZE - PLAYER_SIZE));
     } else {
+        // Try to move horizontally
         if (!checkWallCollision(newX, player.y, PLAYER_SIZE)) {
             player.x = newX;
+        } else if (player.isDashing) {
+            // Try to break wall while dashing
+            if (tryBreakWall(newX, player.y, PLAYER_SIZE)) {
+                // Wall broken, can now move
+                if (!checkWallCollision(newX, player.y, PLAYER_SIZE)) {
+                    player.x = newX;
+                }
+            }
         }
+        // Try to move vertically
         if (!checkWallCollision(player.x, newY, PLAYER_SIZE)) {
             player.y = newY;
+        } else if (player.isDashing) {
+            // Try to break wall while dashing
+            if (tryBreakWall(player.x, newY, PLAYER_SIZE)) {
+                // Wall broken, can now move
+                if (!checkWallCollision(player.x, newY, PLAYER_SIZE)) {
+                    player.y = newY;
+                }
+            }
         }
     }
 
@@ -594,11 +613,65 @@ function checkWallCollision(x, y, size) {
         }
 
         const tile = gameState.map[tileY][tileX];
-        if (tile === TILES.WALL || tile === TILES.LOCKER) {
+        if (tile === TILES.WALL || tile === TILES.LOCKER || tile === TILES.BREAKABLE_WALL) {
             return true;
         }
     }
     return false;
+}
+
+// Check if player can break a wall while dashing
+function tryBreakWall(x, y, size) {
+    if (!player.isDashing) return false;
+
+    const halfSize = size / 2;
+    const corners = [
+        { x: x - halfSize, y: y - halfSize },
+        { x: x + halfSize, y: y - halfSize },
+        { x: x - halfSize, y: y + halfSize },
+        { x: x + halfSize, y: y + halfSize }
+    ];
+
+    let brokeWall = false;
+    for (const corner of corners) {
+        const tileX = Math.floor(corner.x / TILE_SIZE);
+        const tileY = Math.floor(corner.y / TILE_SIZE);
+
+        if (tileX < 0 || tileX >= gameState.mapWidth ||
+            tileY < 0 || tileY >= gameState.mapHeight) {
+            continue;
+        }
+
+        const tile = gameState.map[tileY][tileX];
+        if (tile === TILES.BREAKABLE_WALL) {
+            // Break the wall!
+            gameState.map[tileY][tileX] = TILES.FLOOR;
+            brokeWall = true;
+
+            // Visual feedback - spawn debris particles
+            const centerX = tileX * TILE_SIZE + TILE_SIZE / 2;
+            const centerY = tileY * TILE_SIZE + TILE_SIZE / 2;
+            for (let i = 0; i < 8; i++) {
+                spawnParticle(centerX, centerY, 'wallbreak');
+            }
+
+            // Screen shake
+            gameState.screenShake = Math.max(gameState.screenShake, 5);
+
+            // Play crash sound
+            playSound('wallbreak');
+
+            // Add cooldown penalty (0.5s extra)
+            player.dashCooldown += 0.5;
+            updateMobileDashButton();
+
+            // Broadcast in multiplayer
+            if (typeof broadcastWallBreak === 'function') {
+                broadcastWallBreak(tileX, tileY);
+            }
+        }
+    }
+    return brokeWall;
 }
 
 function checkCollisions() {
@@ -798,7 +871,8 @@ function spawnParticle(x, y, type) {
         collect: ['#ffd700', '#ffec8b', '#fff'],
         powerup: ['#4ade80', '#22d3ee', '#a78bfa'],
         hit: ['#ff6b6b', '#ff0000', '#ff8888'],
-        dash: ['#60a5fa', '#3b82f6', '#93c5fd']
+        dash: ['#60a5fa', '#3b82f6', '#93c5fd'],
+        wallbreak: ['#8b6914', '#a0522d', '#d2b48c', '#5c4033']
     };
 
     const color = colors[type][Math.floor(Math.random() * colors[type].length)];
@@ -1346,6 +1420,42 @@ function drawMap() {
                         ctx.lineTo(px + TILE_SIZE / 2, py + TILE_SIZE);
                         ctx.stroke();
                     }
+                    break;
+
+                case TILES.BREAKABLE_WALL:
+                    // Breakable wall - cracked brick appearance (lighter color)
+                    const breakableGradient = ctx.createLinearGradient(px, py, px, py + TILE_SIZE);
+                    breakableGradient.addColorStop(0, '#7a5a43');
+                    breakableGradient.addColorStop(1, '#5a4030');
+                    ctx.fillStyle = breakableGradient;
+                    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+                    // Brick pattern
+                    ctx.strokeStyle = '#3a2a1a';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                    if (y % 2 === 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(px + TILE_SIZE / 2, py);
+                        ctx.lineTo(px + TILE_SIZE / 2, py + TILE_SIZE);
+                        ctx.stroke();
+                    }
+                    // Draw cracks
+                    ctx.strokeStyle = '#2a1a0a';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    // Main diagonal crack
+                    ctx.moveTo(px + 6, py + 4);
+                    ctx.lineTo(px + 14, py + 12);
+                    ctx.lineTo(px + 10, py + 18);
+                    ctx.lineTo(px + 18, py + 26);
+                    // Branch crack
+                    ctx.moveTo(px + 14, py + 12);
+                    ctx.lineTo(px + 22, py + 10);
+                    ctx.lineTo(px + 28, py + 16);
+                    // Small crack
+                    ctx.moveTo(px + 20, py + 22);
+                    ctx.lineTo(px + 26, py + 28);
+                    ctx.stroke();
                     break;
 
                 case TILES.DESK:

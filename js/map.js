@@ -58,6 +58,9 @@ function generateMap() {
     // Generate rooms with density
     generateRooms(config.roomChance, roomDensity);
 
+    // Place breakable walls (shortcuts that can be dashed through)
+    placeBreakableWalls();
+
     // Add obstacles
     addObstacles(config.obstacleChance);
 
@@ -347,6 +350,35 @@ function generateRooms(roomChance, roomDensity) {
                             gameState.map[y][x] = TILES.DESK;
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+// Place breakable walls - walls that can be dashed through to create shortcuts
+function placeBreakableWalls() {
+    const mapW = gameState.mapWidth;
+    const mapH = gameState.mapHeight;
+    const breakableChance = 0.08; // 8% of eligible walls become breakable
+
+    for (let y = 2; y < mapH - 2; y++) {
+        for (let x = 2; x < mapW - 2; x++) {
+            if (gameState.map[y][x] !== TILES.WALL) continue;
+
+            // Check if this wall creates a potential shortcut
+            // It must have floor on opposite sides (horizontal or vertical)
+            const hasHorizontalShortcut =
+                gameState.map[y][x - 1] === TILES.FLOOR &&
+                gameState.map[y][x + 1] === TILES.FLOOR;
+            const hasVerticalShortcut =
+                gameState.map[y - 1][x] === TILES.FLOOR &&
+                gameState.map[y + 1][x] === TILES.FLOOR;
+
+            if ((hasHorizontalShortcut || hasVerticalShortcut) && Math.random() < breakableChance) {
+                // Don't place breakable walls at map edges
+                if (x > 2 && x < mapW - 3 && y > 2 && y < mapH - 3) {
+                    gameState.map[y][x] = TILES.BREAKABLE_WALL;
                 }
             }
         }

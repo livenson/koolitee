@@ -105,6 +105,14 @@ function playSound(type, options = {}) {
             // UI hover
             playTone(400, 0.03, 'sine', 0.1);
             break;
+
+        case 'wallbreak':
+            // Wall breaking crash - low rumble with debris
+            playNoise(0.25, 0.35);
+            playTone(80, 0.2, 'sawtooth', 0.3);
+            playTone(120, 0.15, 'square', 0.2, 0.05);
+            playSweep(200, 60, 0.2, 'sawtooth', 0.2);
+            break;
     }
 }
 
