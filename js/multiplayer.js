@@ -368,6 +368,25 @@ function handleMultiplayerEvent({ event, user, connectionId }) {
             playSound('stinkbomb');
             break;
 
+        case 'WALL_BREAK':
+            // Another player broke a wall
+            if (event.tileX !== undefined && event.tileY !== undefined) {
+                const tileX = event.tileX;
+                const tileY = event.tileY;
+                if (gameState.map[tileY] && gameState.map[tileY][tileX] === TILES.BREAKABLE_WALL) {
+                    gameState.map[tileY][tileX] = TILES.FLOOR;
+                    // Spawn debris particles
+                    const centerX = tileX * TILE_SIZE + TILE_SIZE / 2;
+                    const centerY = tileY * TILE_SIZE + TILE_SIZE / 2;
+                    for (let i = 0; i < 8; i++) {
+                        spawnParticle(centerX, centerY, 'wallbreak');
+                    }
+                    gameState.screenShake = Math.max(gameState.screenShake, 5);
+                    playSound('wallbreak');
+                }
+            }
+            break;
+
         case 'TEACHER_POSITIONS':
             // Host is broadcasting teacher positions
             if (!mpState.isHost && event.teachers) {
@@ -622,6 +641,17 @@ function broadcastStinkBomb() {
 
     mpState.room.broadcastEvent({
         type: 'STINK_BOMB'
+    });
+}
+
+// Broadcast wall break
+function broadcastWallBreak(tileX, tileY) {
+    if (!mpState.active || !mpState.room) return;
+
+    mpState.room.broadcastEvent({
+        type: 'WALL_BREAK',
+        tileX: tileX,
+        tileY: tileY
     });
 }
 
