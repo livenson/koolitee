@@ -58,9 +58,6 @@ function generateMap() {
     // Generate rooms with density
     generateRooms(config.roomChance, roomDensity);
 
-    // Place breakable walls (shortcuts that can be dashed through)
-    placeBreakableWalls();
-
     // Add obstacles
     addObstacles(config.obstacleChance);
 
@@ -69,6 +66,9 @@ function generateMap() {
 
     // Place player start
     placePlayer();
+
+    // Place breakable walls (after player/exit so we know their positions)
+    placeBreakableWalls();
 
     // Compute reachable tiles from player position
     const reachable = computeReachableTiles();
@@ -360,7 +360,6 @@ function generateRooms(roomChance, roomDensity) {
 function placeBreakableWalls() {
     const mapW = gameState.mapWidth;
     const mapH = gameState.mapHeight;
-    const breakableChance = 0.15; // Higher chance since we're more selective
 
     // Get player spawn position for distance check
     const playerTileX = Math.floor(player.x / TILE_SIZE);
@@ -380,14 +379,18 @@ function placeBreakableWalls() {
     // Collect candidate walls that would create meaningful shortcuts
     const candidates = [];
 
-    for (let y = 3; y < mapH - 3; y++) {
-        for (let x = 3; x < mapW - 3; x++) {
+    // Scale minimum distances based on map size
+    const minDistPlayer = Math.max(3, Math.floor(mapW / 8));
+    const minDistExit = Math.max(2, Math.floor(mapW / 10));
+
+    for (let y = 2; y < mapH - 2; y++) {
+        for (let x = 2; x < mapW - 2; x++) {
             if (gameState.map[y][x] !== TILES.WALL) continue;
 
             // Skip walls too close to player spawn or exit
             const distToPlayer = Math.abs(x - playerTileX) + Math.abs(y - playerTileY);
             const distToExit = Math.abs(x - exitX) + Math.abs(y - exitY);
-            if (distToPlayer < 6 || distToExit < 4) continue;
+            if (distToPlayer < minDistPlayer || distToExit < minDistExit) continue;
 
             // Check for horizontal shortcut (wall with floor on left and right)
             const hasHorizontalShortcut =
@@ -408,58 +411,25 @@ function placeBreakableWalls() {
             if (hasHorizontalShortcut) {
                 // For horizontal shortcut, check wall extends vertically (proper room/corridor wall)
                 let wallAbove = 0, wallBelow = 0;
-                for (let dy = 1; dy <= 3; dy++) {
+                for (let dy = 1; dy <= 2; dy++) {
                     if (y - dy >= 0 && gameState.map[y - dy][x] === TILES.WALL) wallAbove++;
                     if (y + dy < mapH && gameState.map[y + dy][x] === TILES.WALL) wallBelow++;
                 }
                 wallScore = wallAbove + wallBelow;
-
-                // Also verify the floors on each side aren't already connected nearby
-                // Check if there's an open path within 2 tiles above or below
-                let hasNearbyPath = false;
-                for (let dy = -2; dy <= 2; dy++) {
-                    if (dy === 0) continue;
-                    const checkY = y + dy;
-                    if (checkY > 0 && checkY < mapH - 1) {
-                        if (gameState.map[checkY][x] === TILES.FLOOR &&
-                            gameState.map[checkY][x - 1] === TILES.FLOOR &&
-                            gameState.map[checkY][x + 1] === TILES.FLOOR) {
-                            hasNearbyPath = true;
-                            break;
-                        }
-                    }
-                }
-                if (hasNearbyPath) wallScore = 0; // Not a meaningful shortcut
             }
 
             if (hasVerticalShortcut) {
                 // For vertical shortcut, check wall extends horizontally
                 let wallLeft = 0, wallRight = 0;
-                for (let dx = 1; dx <= 3; dx++) {
+                for (let dx = 1; dx <= 2; dx++) {
                     if (x - dx >= 0 && gameState.map[y][x - dx] === TILES.WALL) wallLeft++;
                     if (x + dx < mapW && gameState.map[y][x + dx] === TILES.WALL) wallRight++;
                 }
                 wallScore = Math.max(wallScore, wallLeft + wallRight);
-
-                // Check if there's an open path within 2 tiles left or right
-                let hasNearbyPath = false;
-                for (let dx = -2; dx <= 2; dx++) {
-                    if (dx === 0) continue;
-                    const checkX = x + dx;
-                    if (checkX > 0 && checkX < mapW - 1) {
-                        if (gameState.map[y][checkX] === TILES.FLOOR &&
-                            gameState.map[y - 1][checkX] === TILES.FLOOR &&
-                            gameState.map[y + 1][checkX] === TILES.FLOOR) {
-                            hasNearbyPath = true;
-                            break;
-                        }
-                    }
-                }
-                if (hasNearbyPath) wallScore = 0;
             }
 
-            // Only consider walls that are part of a meaningful barrier (2+ connected walls)
-            if (wallScore >= 2) {
+            // Accept walls that are part of any barrier (at least 1 connected wall)
+            if (wallScore >= 1) {
                 candidates.push({ x, y, score: wallScore });
             }
         }
@@ -468,15 +438,29 @@ function placeBreakableWalls() {
     // Sort by score (prefer walls that are part of larger structures)
     candidates.sort((a, b) => b.score - a.score);
 
-    // Place breakable walls with some randomness, limiting total count
-    const maxBreakable = Math.max(3, Math.floor(mapW * mapH / 150));
+    // Determine how many breakable walls to place based on map size
+    const targetBreakable = Math.max(2, Math.floor(mapW * mapH / 120));
     let placed = 0;
 
+    // Place the best candidates first, with some randomness
     for (const candidate of candidates) {
-        if (placed >= maxBreakable) break;
-        if (Math.random() < breakableChance) {
+        if (placed >= targetBreakable) break;
+        // Higher chance for better-scored walls
+        const placeChance = 0.3 + (candidate.score * 0.1);
+        if (Math.random() < placeChance) {
             gameState.map[candidate.y][candidate.x] = TILES.BREAKABLE_WALL;
             placed++;
+        }
+    }
+
+    // If we didn't place enough, do a second pass with guaranteed placement
+    if (placed < Math.min(2, candidates.length)) {
+        for (const candidate of candidates) {
+            if (placed >= 2) break;
+            if (gameState.map[candidate.y][candidate.x] === TILES.WALL) {
+                gameState.map[candidate.y][candidate.x] = TILES.BREAKABLE_WALL;
+                placed++;
+            }
         }
     }
 }
