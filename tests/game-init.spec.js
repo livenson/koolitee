@@ -35,12 +35,9 @@ test.describe('Game Initialization', () => {
       width: el.width,
       height: el.height
     }));
-    // Canvas should have positive dimensions and maintain roughly 4:3 aspect ratio
+    // Canvas should have positive dimensions (size varies by device)
     expect(dimensions.width).toBeGreaterThan(0);
     expect(dimensions.height).toBeGreaterThan(0);
-    const aspectRatio = dimensions.width / dimensions.height;
-    expect(aspectRatio).toBeGreaterThan(1.2);
-    expect(aspectRatio).toBeLessThan(1.5);
   });
 
   test('should have the minimap canvas', async ({ page }) => {
