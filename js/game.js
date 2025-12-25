@@ -90,9 +90,13 @@ let mobileInput = {
 // RESPONSIVE CANVAS
 // ============================================
 
-// Base resolution (internal game coordinates)
+// Base resolution constants (desktop)
 const BASE_WIDTH = 800;
 const BASE_HEIGHT = 600;
+
+// Dynamic viewport size (adjusted for mobile)
+let viewportWidth = BASE_WIDTH;
+let viewportHeight = BASE_HEIGHT;
 
 // Track display scaling
 let displayScale = 1;
@@ -107,25 +111,43 @@ function resizeCanvas() {
     const availableWidth = window.innerWidth - 20;
     const availableHeight = window.innerHeight - headerHeight - 20;
 
-    // Calculate scale to fit while maintaining aspect ratio
-    const scaleX = availableWidth / BASE_WIDTH;
-    const scaleY = availableHeight / BASE_HEIGHT;
-    displayScale = Math.min(scaleX, scaleY, 2); // Cap at 2x to prevent excessive scaling
+    // Detect mobile/small screens - use smaller viewport for larger game elements
+    const isMobile = mobileInput.isTouchDevice || window.innerWidth < 768;
+
+    if (isMobile) {
+        // On mobile, use a smaller viewport so game elements appear larger
+        // This shows fewer tiles but makes them more visible
+        const mobileScale = Math.min(availableWidth / 400, availableHeight / 300);
+        viewportWidth = Math.floor(availableWidth / mobileScale);
+        viewportHeight = Math.floor(availableHeight / mobileScale);
+        // Clamp to reasonable bounds
+        viewportWidth = Math.max(320, Math.min(viewportWidth, 500));
+        viewportHeight = Math.max(240, Math.min(viewportHeight, 400));
+    } else {
+        // Desktop uses full viewport
+        viewportWidth = BASE_WIDTH;
+        viewportHeight = BASE_HEIGHT;
+    }
+
+    // Calculate scale to fit viewport in available space
+    const scaleX = availableWidth / viewportWidth;
+    const scaleY = availableHeight / viewportHeight;
+    displayScale = Math.min(scaleX, scaleY, 3);
 
     // Calculate display size
-    const displayWidth = Math.floor(BASE_WIDTH * displayScale);
-    const displayHeight = Math.floor(BASE_HEIGHT * displayScale);
+    const displayWidth = Math.floor(viewportWidth * displayScale);
+    const displayHeight = Math.floor(viewportHeight * displayScale);
 
     // Set CSS display size
     canvas.style.width = displayWidth + 'px';
     canvas.style.height = displayHeight + 'px';
 
     // Set internal resolution (higher for sharp rendering on high-DPI)
-    const internalScale = Math.min(dpr, 2); // Cap internal scale for performance
-    canvas.width = Math.floor(BASE_WIDTH * internalScale);
-    canvas.height = Math.floor(BASE_HEIGHT * internalScale);
+    const internalScale = Math.min(dpr, 2);
+    canvas.width = Math.floor(viewportWidth * internalScale);
+    canvas.height = Math.floor(viewportHeight * internalScale);
 
-    // Scale the context to match base coordinates
+    // Scale the context to match viewport coordinates
     ctx.setTransform(internalScale, 0, 0, internalScale, 0, 0);
 }
 
@@ -819,15 +841,15 @@ function updateParticles(deltaTime) {
 }
 
 function updateCamera() {
-    // Use base dimensions for consistent camera behavior across all screen sizes
-    const targetX = player.x - BASE_WIDTH / 2;
-    const targetY = player.y - BASE_HEIGHT / 2;
+    // Use dynamic viewport for camera centering
+    const targetX = player.x - viewportWidth / 2;
+    const targetY = player.y - viewportHeight / 2;
 
     gameState.camera.x += (targetX - gameState.camera.x) * 0.1;
     gameState.camera.y += (targetY - gameState.camera.y) * 0.1;
 
-    const maxX = gameState.mapWidth * TILE_SIZE - BASE_WIDTH;
-    const maxY = gameState.mapHeight * TILE_SIZE - BASE_HEIGHT;
+    const maxX = gameState.mapWidth * TILE_SIZE - viewportWidth;
+    const maxY = gameState.mapHeight * TILE_SIZE - viewportHeight;
 
     gameState.camera.x = Math.max(0, Math.min(maxX, gameState.camera.x));
     gameState.camera.y = Math.max(0, Math.min(maxY, gameState.camera.y));
@@ -1235,9 +1257,9 @@ function createEarthquakeCracks() {
 // ============================================
 
 function render() {
-    // Clear canvas (use base dimensions for consistent coordinate space)
+    // Clear canvas using dynamic viewport size
     ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+    ctx.fillRect(0, 0, viewportWidth, viewportHeight);
 
     // Apply screen shake
     let shakeX = 0, shakeY = 0;
@@ -1286,9 +1308,9 @@ function render() {
 function drawMap() {
     const startX = Math.floor(gameState.camera.x / TILE_SIZE);
     const startY = Math.floor(gameState.camera.y / TILE_SIZE);
-    // Use base dimensions for consistent tile rendering
-    const endX = Math.min(startX + Math.ceil(BASE_WIDTH / TILE_SIZE) + 2, gameState.mapWidth);
-    const endY = Math.min(startY + Math.ceil(BASE_HEIGHT / TILE_SIZE) + 2, gameState.mapHeight);
+    // Use dynamic viewport for tile rendering bounds
+    const endX = Math.min(startX + Math.ceil(viewportWidth / TILE_SIZE) + 2, gameState.mapWidth);
+    const endY = Math.min(startY + Math.ceil(viewportHeight / TILE_SIZE) + 2, gameState.mapHeight);
 
     for (let y = Math.max(0, startY); y < endY; y++) {
         for (let x = Math.max(0, startX); x < endX; x++) {
@@ -1933,14 +1955,14 @@ function drawMinimap() {
     minimapCtx.arc(player.x * scaleX, player.y * scaleY, 4, 0, Math.PI * 2);
     minimapCtx.fill();
 
-    // Draw viewport (use base dimensions for correct viewport rectangle)
+    // Draw viewport rectangle showing current view area
     minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
     minimapCtx.lineWidth = 1;
     minimapCtx.strokeRect(
         gameState.camera.x * scaleX,
         gameState.camera.y * scaleY,
-        BASE_WIDTH * scaleX,
-        BASE_HEIGHT * scaleY
+        viewportWidth * scaleX,
+        viewportHeight * scaleY
     );
 }
 
@@ -2054,7 +2076,7 @@ function drawEventEntities(ctx) {
         const playerScreenY = player.y - gameState.camera.y;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+        ctx.fillRect(0, 0, viewportWidth, viewportHeight);
 
         // Flashlight circle
         ctx.globalCompositeOperation = 'destination-out';
@@ -2073,7 +2095,7 @@ function drawEventEntities(ctx) {
     if (gameState.timeFreeze) {
         ctx.save();
         ctx.fillStyle = 'rgba(100, 150, 255, 0.2)';
-        ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+        ctx.fillRect(0, 0, viewportWidth, viewportHeight);
         ctx.restore();
     }
 
@@ -2081,7 +2103,7 @@ function drawEventEntities(ctx) {
     if (gameState.fireDrillActive && Math.floor(Date.now() / 200) % 2 === 0) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
-        ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+        ctx.fillRect(0, 0, viewportWidth, viewportHeight);
         ctx.restore();
     }
 
@@ -2089,11 +2111,11 @@ function drawEventEntities(ctx) {
     if (currentEvent) {
         ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(BASE_WIDTH / 2 - 80, 10, 160, 30);
+        ctx.fillRect(viewportWidth / 2 - 80, 10, 160, 30);
         ctx.fillStyle = '#fff';
         ctx.font = '16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`${currentEvent.icon} ${Math.ceil(eventTimer)}s`, BASE_WIDTH / 2, 30);
+        ctx.fillText(`${currentEvent.icon} ${Math.ceil(eventTimer)}s`, viewportWidth / 2, 30);
         ctx.restore();
     }
 }

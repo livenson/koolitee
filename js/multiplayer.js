@@ -830,11 +830,11 @@ function drawOtherPlayers() {
         const worldX = p.x;
         const worldY = p.y;
 
-        // Skip if off screen (use BASE_WIDTH/HEIGHT for consistent culling)
+        // Skip if off screen (use dynamic viewport for culling)
         const viewX = worldX - gameState.camera.x;
         const viewY = worldY - gameState.camera.y;
-        if (viewX < -50 || viewX > BASE_WIDTH + 50 ||
-            viewY < -50 || viewY > BASE_HEIGHT + 50) continue;
+        if (viewX < -50 || viewX > viewportWidth + 50 ||
+            viewY < -50 || viewY > viewportHeight + 50) continue;
 
         ctx.save();
         ctx.translate(worldX, worldY);
