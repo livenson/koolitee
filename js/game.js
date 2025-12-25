@@ -86,6 +86,49 @@ let mobileInput = {
     isTouchDevice: false
 };
 
+// ============================================
+// RESPONSIVE CANVAS
+// ============================================
+
+// Base resolution (internal game coordinates)
+const BASE_WIDTH = 800;
+const BASE_HEIGHT = 600;
+
+// Track display scaling
+let displayScale = 1;
+
+function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+
+    // Get available space
+    const header = document.getElementById('game-header');
+    const headerHeight = header ? header.offsetHeight + 10 : 60;
+
+    const availableWidth = window.innerWidth - 20;
+    const availableHeight = window.innerHeight - headerHeight - 20;
+
+    // Calculate scale to fit while maintaining aspect ratio
+    const scaleX = availableWidth / BASE_WIDTH;
+    const scaleY = availableHeight / BASE_HEIGHT;
+    displayScale = Math.min(scaleX, scaleY, 2); // Cap at 2x to prevent excessive scaling
+
+    // Calculate display size
+    const displayWidth = Math.floor(BASE_WIDTH * displayScale);
+    const displayHeight = Math.floor(BASE_HEIGHT * displayScale);
+
+    // Set CSS display size
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
+
+    // Set internal resolution (higher for sharp rendering on high-DPI)
+    const internalScale = Math.min(dpr, 2); // Cap internal scale for performance
+    canvas.width = Math.floor(BASE_WIDTH * internalScale);
+    canvas.height = Math.floor(BASE_HEIGHT * internalScale);
+
+    // Scale the context to match base coordinates
+    ctx.setTransform(internalScale, 0, 0, internalScale, 0, 0);
+}
+
 // Settings
 let settings = {
     schoolType: 'middle',
@@ -776,14 +819,15 @@ function updateParticles(deltaTime) {
 }
 
 function updateCamera() {
-    const targetX = player.x - canvas.width / 2;
-    const targetY = player.y - canvas.height / 2;
+    // Use base dimensions for consistent camera behavior across all screen sizes
+    const targetX = player.x - BASE_WIDTH / 2;
+    const targetY = player.y - BASE_HEIGHT / 2;
 
     gameState.camera.x += (targetX - gameState.camera.x) * 0.1;
     gameState.camera.y += (targetY - gameState.camera.y) * 0.1;
 
-    const maxX = gameState.mapWidth * TILE_SIZE - canvas.width;
-    const maxY = gameState.mapHeight * TILE_SIZE - canvas.height;
+    const maxX = gameState.mapWidth * TILE_SIZE - BASE_WIDTH;
+    const maxY = gameState.mapHeight * TILE_SIZE - BASE_HEIGHT;
 
     gameState.camera.x = Math.max(0, Math.min(maxX, gameState.camera.x));
     gameState.camera.y = Math.max(0, Math.min(maxY, gameState.camera.y));
@@ -1191,9 +1235,9 @@ function createEarthquakeCracks() {
 // ============================================
 
 function render() {
-    // Clear canvas
+    // Clear canvas (use base dimensions for consistent coordinate space)
     ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
     // Apply screen shake
     let shakeX = 0, shakeY = 0;
@@ -1242,8 +1286,9 @@ function render() {
 function drawMap() {
     const startX = Math.floor(gameState.camera.x / TILE_SIZE);
     const startY = Math.floor(gameState.camera.y / TILE_SIZE);
-    const endX = Math.min(startX + Math.ceil(canvas.width / TILE_SIZE) + 2, gameState.mapWidth);
-    const endY = Math.min(startY + Math.ceil(canvas.height / TILE_SIZE) + 2, gameState.mapHeight);
+    // Use base dimensions for consistent tile rendering
+    const endX = Math.min(startX + Math.ceil(BASE_WIDTH / TILE_SIZE) + 2, gameState.mapWidth);
+    const endY = Math.min(startY + Math.ceil(BASE_HEIGHT / TILE_SIZE) + 2, gameState.mapHeight);
 
     for (let y = Math.max(0, startY); y < endY; y++) {
         for (let x = Math.max(0, startX); x < endX; x++) {
@@ -1888,14 +1933,14 @@ function drawMinimap() {
     minimapCtx.arc(player.x * scaleX, player.y * scaleY, 4, 0, Math.PI * 2);
     minimapCtx.fill();
 
-    // Draw viewport
+    // Draw viewport (use base dimensions for correct viewport rectangle)
     minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
     minimapCtx.lineWidth = 1;
     minimapCtx.strokeRect(
         gameState.camera.x * scaleX,
         gameState.camera.y * scaleY,
-        canvas.width * scaleX,
-        canvas.height * scaleY
+        BASE_WIDTH * scaleX,
+        BASE_HEIGHT * scaleY
     );
 }
 
@@ -2009,7 +2054,7 @@ function drawEventEntities(ctx) {
         const playerScreenY = player.y - gameState.camera.y;
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
         // Flashlight circle
         ctx.globalCompositeOperation = 'destination-out';
@@ -2028,7 +2073,7 @@ function drawEventEntities(ctx) {
     if (gameState.timeFreeze) {
         ctx.save();
         ctx.fillStyle = 'rgba(100, 150, 255, 0.2)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
         ctx.restore();
     }
 
@@ -2036,7 +2081,7 @@ function drawEventEntities(ctx) {
     if (gameState.fireDrillActive && Math.floor(Date.now() / 200) % 2 === 0) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
         ctx.restore();
     }
 
@@ -2044,11 +2089,11 @@ function drawEventEntities(ctx) {
     if (currentEvent) {
         ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(canvas.width / 2 - 80, 10, 160, 30);
+        ctx.fillRect(BASE_WIDTH / 2 - 80, 10, 160, 30);
         ctx.fillStyle = '#fff';
         ctx.font = '16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`${currentEvent.icon} ${Math.ceil(eventTimer)}s`, canvas.width / 2, 30);
+        ctx.fillText(`${currentEvent.icon} ${Math.ceil(eventTimer)}s`, BASE_WIDTH / 2, 30);
         ctx.restore();
     }
 }
@@ -2628,6 +2673,14 @@ function init() {
 
     // Initialize language
     updateLanguage();
+
+    // Initialize responsive canvas
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => {
+        // Delay resize on orientation change to get correct dimensions
+        setTimeout(resizeCanvas, 100);
+    });
 
     // Start loops
     render();
