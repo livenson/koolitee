@@ -376,102 +376,147 @@ function placeBreakableWalls() {
         }
     }
 
-    // Find potential tunnel locations - floor tiles next to walls that could tunnel through
     const tunnelCandidates = [];
 
-    for (let y = 3; y < mapH - 3; y++) {
-        for (let x = 3; x < mapW - 3; x++) {
-            if (gameState.map[y][x] !== TILES.FLOOR) continue;
+    for (let y = 2; y < mapH - 2; y++) {
+        for (let x = 2; x < mapW - 2; x++) {
+            if (gameState.map[y][x] !== TILES.WALL) continue;
 
-            // Skip tiles too close to player spawn or exit
+            // Skip walls too close to player spawn or exit
             const distToPlayer = Math.abs(x - playerTileX) + Math.abs(y - playerTileY);
             const distToExit = Math.abs(x - exitX) + Math.abs(y - exitY);
-            if (distToPlayer < 5 || distToExit < 4) continue;
+            if (distToPlayer < 4 || distToExit < 3) continue;
 
-            // Check for horizontal tunnel opportunity (walls to the right, floor beyond)
-            // Look for pattern: FLOOR | WALL WALL | FLOOR (tunnel length 2)
-            for (let tunnelLen = 2; tunnelLen <= 3; tunnelLen++) {
-                let canTunnelRight = true;
-                // Check walls in tunnel
-                for (let dx = 1; dx <= tunnelLen; dx++) {
-                    if (gameState.map[y][x + dx] !== TILES.WALL) {
-                        canTunnelRight = false;
-                        break;
-                    }
+            // Check for horizontal shortcut: FLOOR | WALL(s) | FLOOR
+            const floorLeft = gameState.map[y][x - 1] === TILES.FLOOR;
+            const floorRight = gameState.map[y][x + 1] === TILES.FLOOR;
+
+            // Check for vertical shortcut: FLOOR above | WALL(s) | FLOOR below
+            const floorAbove = gameState.map[y - 1][x] === TILES.FLOOR;
+            const floorBelow = gameState.map[y + 1][x] === TILES.FLOOR;
+
+            // Single-wall shortcut (most common in grid mode between rooms)
+            if (floorLeft && floorRight) {
+                // Check this wall is part of a vertical wall line (not isolated)
+                let wallLineLen = 1;
+                for (let dy = 1; dy <= 3; dy++) {
+                    if (y - dy >= 0 && gameState.map[y - dy][x] === TILES.WALL) wallLineLen++;
+                    else break;
                 }
-                // Check floor at end
-                if (canTunnelRight && x + tunnelLen + 1 < mapW &&
-                    gameState.map[y][x + tunnelLen + 1] === TILES.FLOOR) {
+                for (let dy = 1; dy <= 3; dy++) {
+                    if (y + dy < mapH && gameState.map[y + dy][x] === TILES.WALL) wallLineLen++;
+                    else break;
+                }
+                if (wallLineLen >= 2) {
                     tunnelCandidates.push({
-                        x: x + 1,
-                        y: y,
-                        direction: 'horizontal',
-                        length: tunnelLen,
-                        score: tunnelLen
+                        x, y, direction: 'horizontal', length: 1,
+                        score: wallLineLen + 10 // Bonus for single-wall shortcuts
                     });
                 }
             }
 
-            // Check for vertical tunnel opportunity (walls below, floor beyond)
+            if (floorAbove && floorBelow) {
+                // Check this wall is part of a horizontal wall line
+                let wallLineLen = 1;
+                for (let dx = 1; dx <= 3; dx++) {
+                    if (x - dx >= 0 && gameState.map[y][x - dx] === TILES.WALL) wallLineLen++;
+                    else break;
+                }
+                for (let dx = 1; dx <= 3; dx++) {
+                    if (x + dx < mapW && gameState.map[y][x + dx] === TILES.WALL) wallLineLen++;
+                    else break;
+                }
+                if (wallLineLen >= 2) {
+                    tunnelCandidates.push({
+                        x, y, direction: 'vertical', length: 1,
+                        score: wallLineLen + 10
+                    });
+                }
+            }
+
+            // Multi-wall tunnels (2-3 walls thick)
+            // Horizontal tunnel to the right
             for (let tunnelLen = 2; tunnelLen <= 3; tunnelLen++) {
-                let canTunnelDown = true;
-                for (let dy = 1; dy <= tunnelLen; dy++) {
-                    if (gameState.map[y + dy][x] !== TILES.WALL) {
-                        canTunnelDown = false;
+                if (x + tunnelLen >= mapW) continue;
+                let allWalls = true;
+                for (let dx = 0; dx < tunnelLen; dx++) {
+                    if (gameState.map[y][x + dx] !== TILES.WALL) {
+                        allWalls = false;
                         break;
                     }
                 }
-                if (canTunnelDown && y + tunnelLen + 1 < mapH &&
-                    gameState.map[y + tunnelLen + 1][x] === TILES.FLOOR) {
+                // Need floor before and after the tunnel
+                const floorBefore = x > 0 && gameState.map[y][x - 1] === TILES.FLOOR;
+                const floorAfter = x + tunnelLen < mapW && gameState.map[y][x + tunnelLen] === TILES.FLOOR;
+                if (allWalls && floorBefore && floorAfter) {
                     tunnelCandidates.push({
-                        x: x,
-                        y: y + 1,
-                        direction: 'vertical',
-                        length: tunnelLen,
-                        score: tunnelLen
+                        x, y, direction: 'horizontal', length: tunnelLen,
+                        score: tunnelLen * 2
+                    });
+                }
+            }
+
+            // Vertical tunnel downward
+            for (let tunnelLen = 2; tunnelLen <= 3; tunnelLen++) {
+                if (y + tunnelLen >= mapH) continue;
+                let allWalls = true;
+                for (let dy = 0; dy < tunnelLen; dy++) {
+                    if (gameState.map[y + dy][x] !== TILES.WALL) {
+                        allWalls = false;
+                        break;
+                    }
+                }
+                const floorBefore = y > 0 && gameState.map[y - 1][x] === TILES.FLOOR;
+                const floorAfter = y + tunnelLen < mapH && gameState.map[y + tunnelLen][x] === TILES.FLOOR;
+                if (allWalls && floorBefore && floorAfter) {
+                    tunnelCandidates.push({
+                        x, y, direction: 'vertical', length: tunnelLen,
+                        score: tunnelLen * 2
                     });
                 }
             }
         }
     }
 
-    // Sort by tunnel length (prefer longer tunnels - more meaningful shortcuts)
+    // Sort by score (prefer walls that are part of longer wall lines)
     tunnelCandidates.sort((a, b) => b.score - a.score);
 
-    // Place tunnels, avoiding overlaps
-    const targetTunnels = Math.max(2, Math.floor(mapW * mapH / 200));
+    // Place breakable walls, avoiding overlaps
+    const targetCount = Math.max(3, Math.floor(mapW * mapH / 80));
     let placed = 0;
     const usedTiles = new Set();
 
-    for (const tunnel of tunnelCandidates) {
-        if (placed >= targetTunnels) break;
+    for (const candidate of tunnelCandidates) {
+        if (placed >= targetCount) break;
 
-        // Check no overlap with already placed tunnels
+        // Check no overlap
         let overlaps = false;
         const tilesToUse = [];
 
-        if (tunnel.direction === 'horizontal') {
-            for (let dx = 0; dx < tunnel.length; dx++) {
-                const key = `${tunnel.x + dx},${tunnel.y}`;
-                if (usedTiles.has(key)) {
-                    overlaps = true;
-                    break;
-                }
-                tilesToUse.push({ x: tunnel.x + dx, y: tunnel.y, key });
+        for (let i = 0; i < candidate.length; i++) {
+            const tx = candidate.direction === 'horizontal' ? candidate.x + i : candidate.x;
+            const ty = candidate.direction === 'vertical' ? candidate.y + i : candidate.y;
+            const key = `${tx},${ty}`;
+
+            if (usedTiles.has(key)) {
+                overlaps = true;
+                break;
             }
-        } else {
-            for (let dy = 0; dy < tunnel.length; dy++) {
-                const key = `${tunnel.x},${tunnel.y + dy}`;
-                if (usedTiles.has(key)) {
-                    overlaps = true;
-                    break;
+            // Also check we're not too close to another breakable wall
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (usedTiles.has(`${tx + dx},${ty + dy}`)) {
+                        overlaps = true;
+                        break;
+                    }
                 }
-                tilesToUse.push({ x: tunnel.x, y: tunnel.y + dy, key });
+                if (overlaps) break;
             }
+            if (overlaps) break;
+            tilesToUse.push({ x: tx, y: ty, key });
         }
 
-        if (!overlaps) {
-            // Place the breakable wall tunnel
+        if (!overlaps && tilesToUse.length === candidate.length) {
             for (const tile of tilesToUse) {
                 gameState.map[tile.y][tile.x] = TILES.BREAKABLE_WALL;
                 usedTiles.add(tile.key);
