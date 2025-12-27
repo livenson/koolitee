@@ -344,18 +344,20 @@ function updatePlayer(deltaTime) {
     const tileY = Math.floor(player.y / TILE_SIZE);
     if (gameState.map[tileY] && gameState.map[tileY][tileX] === TILES.WET_FLOOR) {
         currentSpeed *= 1.3;
-        player.vx += dx * currentSpeed * 0.3;
-        player.vy += dy * currentSpeed * 0.3;
-        player.vx *= 0.95;
-        player.vy *= 0.95;
+        // Use deltaTime for frame-rate independent acceleration and friction
+        player.vx += dx * currentSpeed * 0.3 * deltaTime * 60;
+        player.vy += dy * currentSpeed * 0.3 * deltaTime * 60;
+        const friction = Math.pow(0.95, deltaTime * 60);
+        player.vx *= friction;
+        player.vy *= friction;
     } else {
         player.vx = dx * currentSpeed;
         player.vy = dy * currentSpeed;
     }
 
-    // Update position with collision
-    const newX = player.x + player.vx;
-    const newY = player.y + player.vy;
+    // Update position with collision (deltaTime * 60 for frame-rate independence)
+    const newX = player.x + player.vx * deltaTime * 60;
+    const newY = player.y + player.vy * deltaTime * 60;
 
     // Superhero can fly through walls
     if (player.canFly) {
@@ -394,9 +396,9 @@ function updatePlayer(deltaTime) {
     else if (dy > 0) player.direction = 1;
     else if (dy < 0) player.direction = 3;
 
-    // Animation
+    // Animation (deltaTime * 60 for frame-rate independence)
     if (dx !== 0 || dy !== 0) {
-        player.animFrame += 0.2;
+        player.animFrame += 0.2 * deltaTime * 60;
     }
 
     // Dash particles
